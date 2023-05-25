@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "naja"
+version = "0.1.0"
+description = "A asyncronous web crawling package for Python."
+authors = ["William Fernandes Dias <william.winchester1967@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httpx = "^0.24.1"
+tldextract = "^3.4.4"
+
+
+[tool.poetry.group.code.dependencies]
+mypy = "^1.3.0"
+black = "^23.3.0"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.3.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+check_untyped_defs = "true"
+disallow_untyped_calls = "true"
+disallow_untyped_decorators = "true"
+ignore_errors = "false"
+ignore_missing_imports = "true"
+implicit_reexport = "false"
+strict_optional = "true"
+strict_equality = "true"
+no_implicit_optional = "true"
+warn_unused_ignores = "true"
+warn_redundant_casts = "true"
+warn_unused_configs = "true"
+warn_unreachable = "true"
+warn_no_return = "true"
