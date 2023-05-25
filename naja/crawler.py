@@ -3,8 +3,8 @@ from typing import Callable, Generator, Iterable
 
 import httpx
 
-from . import filters, parsers
-from .protocols import Filterer, Parser
+from . import filters, limiters, parsers
+from .protocols import Filterer, Parser, RateLimiter
 
 FoundUrlsHandler = Callable[[set[str]], Generator[set[str], None, None]]
 
@@ -16,30 +16,33 @@ class Crawler:
     A simple asyncronous web crawler that uses httpx to navigate to websites
     asynchronously and do some work with its content.
 
-    :param client: An instance of httpx.AsyncClient to use for network requests.
-    :type client: httpx.AsyncClient
+    :param client: An instance of `httpx.AsyncClient` to use for network requests.
+    :type client: `httpx.AsyncClient`
 
     :param urls: An iterable of URLs to start the crawling with.
-    :type urls: Iterable[str]
+    :type urls: `Iterable[str]`
 
     :param filterer: A filterer to filter out URLs to ignore.
-    :type filter_url: BaseFilter | None
+    :type filter_url: `Filter | None`
 
     :param workers: The number of worker tasks to run in parallel.
-    :type workers: int
+    :type workers: `int`
 
     :param limit: The maximum number of pages to crawl.
-    :type limit: int
+    :type limit: `int`
 
     :param found_urls_handlers: A list of FoundUrlsHandler objects to use for processing
     newly found URLs.
-    :type found_urls_handlers: Iterable[FoundUrlsHandler]
+    :type found_urls_handlers: `Iterable[FoundUrlsHandler]`
 
-    :param parser_class: A parser factory object to use for parsing HTML responses.
-    :type parser_class: BaseParserFactory | None
+    :param parser_class: A parser factory object to use for parsing HTML responses. Defaults to `type(parsers.UrlParser)`.
+    :type parser_class: `ParserFactory | None`
 
-    :return: None
-    :rtype: None
+    :param rate_limiter: A rate limiter to limit the number of requests sent per second. Defaults to `limiters.NoLimitRateLimiter`.
+    :type rate_limiter: `RateLimiter | None`
+
+    :return: `None`
+    :rtype: `None`
     """
 
     def __init__(
@@ -51,6 +54,7 @@ class Crawler:
         limit: int = 25,
         found_urls_handlers: Iterable[FoundUrlsHandler] = [],
         parser_class: ParserFactory | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> None:
         self.client = client
 
@@ -63,6 +67,8 @@ class Crawler:
 
         self.parser_class = parser_class or parsers.UrlParser
         self.filter_url = filterer or filters.UrlFilterer()
+
+        self.rate_limiter = rate_limiter or limiters.NoLimitRateLimiter()
 
         self.num_workers = workers
         self.limit = limit
@@ -98,8 +104,7 @@ class Crawler:
             self.todo.task_done()
 
     async def crawl(self, url: str) -> None:
-        # rate limiting
-        await asyncio.sleep(0.1)
+        await self.rate_limiter.limit(url)
 
         response = await self.client.get(url, follow_redirects=True)
 

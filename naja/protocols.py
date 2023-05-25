@@ -49,3 +49,19 @@ class Parser(Protocol):
         ...
 
 
+class RateLimiter(Protocol):
+    """
+    Limits the amount of concurrent network requests to certain websites in order to avoid bans and throttling.
+    """
+
+    async def limit(self, url: str) -> None:
+        """
+        Asynchronously limits the specified URL.
+
+        :param url: The URL to limit.
+        :type url: `str`
+
+        :return: None
+        :rtype: None
+        """
+        ...
