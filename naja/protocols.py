@@ -29,7 +29,7 @@ class Filterer(Protocol):
 
 class Parser(Protocol):
     """
-    Parsers the content of a website to extract the links of interest (which are stored in the `found_links` attribute as `urllib.parse.ParseResult`).
+    Parses the content of a file (webpages, or sitemaps, for example) to extract the links of interest (which are stored in the `found_links` attribute as `urllib.parse.ParseResult`).
 
     :param base: The base URL of the website
     :type base: `str`
