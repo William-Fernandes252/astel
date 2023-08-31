@@ -5,7 +5,7 @@ from typing import Callable, Generator, Type
 import httpx
 
 from . import agent, limiters, parsers
-from .filterers import UrlFilterer, filters
+from .filterers import UrlFilterer
 from .protocols import Filterer, Parser, RateLimiter, Url
 
 FoundUrlsHandler = Callable[[Set[str]], Generator[Set[str], None, None]]
