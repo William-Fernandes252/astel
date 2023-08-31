@@ -1,9 +1,47 @@
 from collections.abc import Set
-from typing import Protocol
-from urllib.parse import ParseResult
 from urllib.robotparser import RequestRate
 
-__all__ = ["Filterer", "Parser", "RateLimiter", "ParseResult"]
+from typing_extensions import Protocol
+
+__all__ = ["Filterer", "Parser", "RateLimiter", "Url"]
+
+
+class Url(Protocol):
+    """
+    Model of a URL for the library to work with.
+    """
+
+    @property
+    def domain(self) -> str:
+        ...
+
+    @property
+    def path(self) -> str:
+        ...
+
+    @property
+    def params(self) -> str:
+        ...
+
+    @property
+    def scheme(self) -> str:
+        ...
+
+    @property
+    def query(self) -> str:
+        ...
+
+    @property
+    def fragment(self) -> str:
+        ...
+
+    @property
+    def raw(self) -> str:
+        ...
+
+    @property
+    def filetype(self) -> str:
+        ...
 
 
 class Filterer(Protocol):
@@ -11,7 +49,7 @@ class Filterer(Protocol):
     Filters URLs found by ensuring it passes the requirements to be processed.
     """
 
-    def filter_url(self, base: str, url: str | None) -> str | None:
+    def process(self, url: Url) -> Url | None:
         """
         Filters a URL by ensuring it passes the requirements to be processed. Accepts a base URL and a URL to filter.
 
@@ -29,7 +67,7 @@ class Filterer(Protocol):
 
 class Parser(Protocol):
     """
-    Parses the content of a file (webpages, or sitemaps, for example) to extract the links of interest (which are stored in the `found_links` attribute as `urllib.parse.ParseResult`).
+    Parses the content of a file (webpages, or sitemaps, for example) to extract the links of interest (which are stored in the `found_links` attribute as instances of `Url`).
 
     :param base: The base URL of the website
     :type base: `str`
@@ -38,7 +76,7 @@ class Parser(Protocol):
     :type url_filter: `Filterer`
     """
 
-    found_links: Set[ParseResult]
+    found_links: Set[Url]
 
     def __init__(self, base: str, url_filter: Filterer, *args, **kwargs):
         ...
@@ -53,7 +91,7 @@ class Parser(Protocol):
         ...
 
     @staticmethod
-    def parse_url(url: str) -> ParseResult:
+    def parse_url(raw_url: str) -> Url:
         ...
 
 

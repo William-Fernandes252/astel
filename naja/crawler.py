@@ -4,8 +4,9 @@ from typing import Callable, Generator, Type
 
 import httpx
 
-from . import agent, filters, limiters, parsers
-from .protocols import Filterer, Parser, ParseResult, RateLimiter
+from . import agent, limiters, parsers
+from .filterers import UrlFilterer, filters
+from .protocols import Filterer, Parser, RateLimiter, Url
 
 FoundUrlsHandler = Callable[[Set[str]], Generator[Set[str], None, None]]
 
@@ -63,13 +64,13 @@ class Crawler:
         self.todo: asyncio.Queue[asyncio.Task] = asyncio.Queue()
 
         self.start_urls = set(urls)
-        self.urls_seen: set[ParseResult] = set()
+        self.urls_seen: set[Url] = set()
         self.done: set[str] = set()
         self._found_urls_handlers = set(found_urls_handlers)
         self.agent = user_agent or agent.UserAgent("naja")
 
         self.parser_class = parser_class or parsers.HTMLAnchorsParser
-        self.filter_url = filterer or filters.UrlFilterer()
+        self.filter_url: Filterer = filterer or UrlFilterer()
 
         self.rate_limiter = rate_limiter or limiters.NoLimitRateLimiter()
 
@@ -122,22 +123,20 @@ class Crawler:
 
         self.done.add(url)
 
-    async def parse_links(self, base: str, text: str) -> Set[ParseResult]:
+    async def parse_links(self, base: str, text: str) -> Set[Url]:
         parser = self.parser_class(base, self.filter_url)
         parser.parse_content(text)
         return parser.found_links
 
-    async def _acknowledge_domains(
-        self, parsed_urls: Set[ParseResult]
-    ) -> Set[ParseResult]:
+    async def _acknowledge_domains(self, parsed_urls: Set[Url]) -> Set[Url]:
         new = parsed_urls - self.urls_seen
         for result in new:
             self.agent.respect(
-                result.netloc, f"{result.scheme}://{result.netloc}/robots.txt"
+                result.domain, f"{result.scheme}://{result.domain}/robots.txt"
             )
 
             async with asyncio.TaskGroup() as tg:
-                for site_map_path in self.agent.get_site_maps(result.netloc) or []:
+                for site_map_path in self.agent.get_site_maps(result.domain) or []:
                     tg.create_task(
                         self._acknowledge_domains(
                             await self.parse_site_map(site_map_path)
@@ -145,32 +144,31 @@ class Crawler:
                     )
 
             self.rate_limiter.configure(
-                domain=result.netloc,
-                crawl_delay=self.agent.get_crawl_delay(result.netloc),
-                request_rate=self.agent.get_request_rate(result.netloc),
+                domain=result.domain,
+                crawl_delay=self.agent.get_crawl_delay(result.domain),
+                request_rate=self.agent.get_request_rate(result.domain),
             )
 
         self.urls_seen.update(new)
 
         return new
 
-    async def parse_site_map(self, site_map_path: str) -> Set[ParseResult]:
+    async def parse_site_map(self, site_map_path: str) -> Set[Url]:
         parser = parsers.SiteMapParser(site_map_path, self.filter_url)
         response = await self.client.get(site_map_path)
         parser.parse_content(response.text)
-        print("Found links in site maps:", parser.found_links)
         return parser.found_links
 
-    async def on_found_links(self, urls: Set[ParseResult]) -> None:
+    async def on_found_links(self, urls: Set[Url]) -> None:
         new = await self._acknowledge_domains(urls)
 
         if len(self._found_urls_handlers) > 0:
             async with asyncio.TaskGroup() as tg:
                 for handler in self._found_urls_handlers:
-                    tg.create_task(handler({result.geturl() for result in new}))
+                    tg.create_task(handler({result.raw for result in new}))
 
         for result in new:
-            await self.put_todo(result.geturl())
+            await self.put_todo(result.raw)
 
     async def put_todo(self, url: str) -> None:
         if self.total_pages > self.limit:
@@ -188,10 +186,10 @@ class Crawler:
 async def main() -> None:
     import time
 
-    filterer = filters.UrlFilterer(
-        allowed_domains={"mcoding.io"},
-        allowed_schemes={"https", "http"},
-        allowed_filetypes={".html", ".php", ""},
+    filterer = UrlFilterer(
+        domain__in=("mcoding.io"),
+        scheme__in=("https", "http"),
+        filetype__in=(".html", ".php", ""),
     )
 
     start = time.perf_counter()
@@ -202,10 +200,10 @@ async def main() -> None:
         await crawler.run()
     end = time.perf_counter()
 
-    seen = sorted(crawler.urls_seen)
+    seen = crawler.urls_seen
     print("Results:")
     for result in seen:
-        print(result.geturl())
+        print(result.raw)
     print(f"Crawled: {len(crawler.done)} URLs")
     print(f"Found: {len(seen)} URLs")
     print(f"Time: {end - start} seconds")
@@ -218,10 +216,10 @@ if __name__ == "__main__":
 # TODO:
 # - add logging
 # - add retry
-# - respect robots.txt
-# - find links in sitemap.xml
-# - provide a user agent
-# - normalize urls (e.g. https://mcoding.io/ -> https://mcoding.io)
+# - respect robots.txt *done*
+# - find links in sitemap.xml *done*
+# - provide a user agent *done*
+# - normalize urls (e.g. https://mcoding.io/ -> https://mcoding.io) *done*
 # - skip filetypes or filetypes only
 # - max depth of links
 # - store connections as graph
