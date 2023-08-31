@@ -39,17 +39,17 @@ class UserAgent:
             return
         self._acknowledged_domains[domain] = RobotFileParser(robots_url)
 
-    def can_fetch(self, domain: str, url: str) -> bool:
+    def can_access(self, domain: str, url: str) -> bool:
         """
-        Determines whether the given URL can be fetched by the user agent for the specified domain.
+        Determines whether the given URL can be accessed by the user agent for the specified domain.
 
-        :param domain: A string representing the domain to fetch the URL from.
+        :param domain: A string representing the domain of the URL.
         :type domain: `str`
 
-        :param url: A string representing the URL to fetch.
+        :param url: A string representing the URL to access.
         :type url: `str`
 
-        :return: A boolean indicating whether the URL can be fetched for the specified domain.
+        :return: A boolean indicating whether the URL can be accessed for the specified domain.
         """
         return self._acknowledged_domains[domain].can_fetch(self.name, url)
 
