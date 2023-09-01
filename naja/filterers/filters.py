@@ -3,7 +3,8 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from typing import Callable, Literal, Self
+from collections.abc import Sequence
+from typing import Callable, Final, Literal, Self
 
 from naja.protocols import Url
 
@@ -16,12 +17,22 @@ __all__ = [
     "StartsWith",
     "EndsWith",
     "Contains",
+    "FilterFactory",
 ]
 
 
-UrlProperty = Literal["domain", "path", "params", "query", "fragment"]
+UrlProperty = Literal[
+    "domain", "path", "params", "query", "fragment", "scheme", "filetype"
+]
+
 UrlGetter = Callable[[Url], str]
 CallableFilter = Callable[[Url], bool]
+
+FilterParameter = re.Pattern[str] | str | Sequence[str]
+
+url_valid_properties: Final[list[str]] = [
+    p for p in dir(Url) if isinstance(getattr(Url, p), property)
+]
 
 
 class Filter(ABC):
@@ -137,3 +148,35 @@ class EndsWith(TextFilter):
 class Contains(TextFilter):
     def apply(self, url: Url) -> bool:
         return self.text in self.target(url)
+
+
+class FilterFactory:
+    @staticmethod
+    def _validate_filter_key(key: str | None) -> None:
+        if key is None:
+            raise ValueError("Filter key cannot be None.")
+        if key != "in" or key not in [
+            modifier + name
+            for name in (klass.__name__ for klass in Filter.__subclasses__())
+            for modifier in ["i", ""]
+        ]:
+            raise ValueError(f"{key} is not a valid filter kwarg.")
+
+    @staticmethod
+    def _validate_url_property(url_property: str) -> None:
+        if url_property not in url_valid_properties:
+            raise ValueError(f"{url_property} is not a valid URL property.")
+
+    @classmethod
+    def create_from_kwarg(cls, key: str, value: FilterParameter) -> Filter | None:
+        url_property, filter_key = key.split("__")
+        cls._validate_filter_key(filter_key)
+        cls._validate_url_property(url_property)
+
+        for klass in Filter.__subclasses__():
+            if klass.__name__.lower() == filter_key:
+                return klass(url_property, value)  # type: ignore
+            elif klass.__name__.lower() == filter_key[1:]:
+                modifier = filter_key[0]
+                return klass(url_property, value, case_sensitive=modifier != "i")  # type: ignore
+        return None
