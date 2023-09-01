@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET
 from .protocols import Filterer, Url
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class ParsedUrl:
     scheme: str
     domain: str
@@ -20,14 +20,14 @@ class ParsedUrl:
     @cached_property
     def raw(self) -> str:
         return parse.urlunparse(
-            {
+            (
                 self.scheme,
                 self.domain,
                 self.path,
                 self.params,
                 self.query,
                 self.fragment,
-            }
+            )
         )
 
     @cached_property
