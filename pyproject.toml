@@ -3,7 +3,7 @@
 name = "naja"
 version = "0.1.0"
 homepage = "https://github.com/William-Fernandes252/naja"
-description = "Python package for asyncronous web crawling.."
+description = "Python package for asyncronous web crawling."
 authors = ["William Fernandes Dias <william.winchester1967@gmail.com>"]
 readme = "README.md"
 license =  "MIT"
