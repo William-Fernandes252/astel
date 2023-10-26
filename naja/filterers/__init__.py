@@ -1,6 +1,4 @@
-import re
-from collections.abc import Sequence
-from typing import Self, get_args
+from __future__ import annotations
 
 from naja.protocols import Url
 
@@ -43,7 +41,10 @@ class UrlFilterer:
             if f := self.filter_factory.create_from_kwarg(key, value):
                 self.filters.add(f)
 
-    def filter(self, condition: Filter | None, **kwargs: FilterParameter) -> Self:
+    def filter(
+        self, condition: Filter | None, **kwargs: FilterParameter
+    ) -> "UrlFilterer":
+        self.filters = set()
         if condition is not None and len(kwargs) > 0:
             raise ValueError(
                 "Only one of condition and filter kwargs can be specified."

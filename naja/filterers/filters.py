@@ -3,8 +3,7 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from typing import Callable, Final, Literal, Self
+from typing import Callable, Final, Literal, Sequence, Union
 
 from naja.protocols import Url
 
@@ -18,6 +17,7 @@ __all__ = [
     "EndsWith",
     "Contains",
     "FilterFactory",
+    "url_valid_properties",
 ]
 
 
@@ -28,7 +28,7 @@ UrlProperty = Literal[
 UrlGetter = Callable[[Url], str]
 CallableFilter = Callable[[Url], bool]
 
-FilterParameter = re.Pattern[str] | str | Sequence[str]
+FilterParameter = Union[re.Pattern, str, Sequence[str]]
 
 url_valid_properties: Final[list[str]] = [
     p for p in dir(Url) if isinstance(getattr(Url, p), property)
@@ -97,11 +97,11 @@ class Filter(ABC):
         __doc__ = self.filter.__doc__
         return self.filter(url)
 
-    def __invert__(self) -> Self:
+    def __invert__(self) -> "Filter":
         self.__inverted = True
         return self
 
-    def __and__(self, other) -> Self:
+    def __and__(self, other) -> "Filter":
         if not isinstance(other, Filter):
             raise NotImplementedError()
         new = copy.deepcopy(self)
@@ -110,9 +110,9 @@ class Filter(ABC):
 
 
 class In(Filter):
-    def __init__(self, target: UrlProperty, *args: str):
+    def __init__(self, target: UrlProperty, group: Sequence[str]):
         super().__init__(target)
-        self.set = set(args)
+        self.set = set(group)
 
     def apply(self, url: Url) -> bool:
         return self.target(url) in self.set

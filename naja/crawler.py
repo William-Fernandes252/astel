@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from collections.abc import Iterable, Set
-from typing import Callable, Generator, Type
+from typing import Callable, Generator, Iterable, Set, Type
 
 import httpx
 
