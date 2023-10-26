@@ -62,6 +62,9 @@ class Filter(ABC):
     _chained: list[Filter] = []
 
     def __init__(self, target: UrlProperty | UrlGetter):
+        if isinstance(target, str) and target not in url_valid_properties:
+            raise ValueError(f"target must be one of {url_valid_properties}.")
+
         self.target = (
             lambda url: getattr(url, target) if isinstance(target, str) else target
         )
