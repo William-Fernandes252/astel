@@ -13,6 +13,7 @@ from .filters import (
     In,
     Matches,
     StartsWith,
+    UrlGetter,
     UrlProperty,
 )
 
