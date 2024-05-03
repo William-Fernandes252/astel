@@ -6,7 +6,6 @@ from typing import Callable, Generator, Iterable, Set, Type
 import httpx
 
 from . import agent, limiters, parsers
-from .filterers import UrlFilterer
 from .protocols import Filterer, Parser, RateLimiter, Url
 
 FoundUrlsHandler = Callable[[Set[str]], Generator[Set[str], None, None]]
@@ -71,7 +70,6 @@ class Crawler:
         self.agent = user_agent or agent.UserAgent("naja")
 
         self.parser_class = parser_class or parsers.HTMLAnchorsParser
-        self.filter_url: Filterer = filterer or UrlFilterer()
 
         self.rate_limiter = rate_limiter or limiters.NoLimitRateLimiter()
 
@@ -104,7 +102,7 @@ class Crawler:
         task = await self.todo.get()
         try:
             await task
-        except Exception as exc:
+        except Exception:
             # logging and retrying
             pass
         finally:
@@ -187,17 +185,9 @@ class Crawler:
 async def main() -> None:
     import time
 
-    filterer = UrlFilterer(
-        domain__in=("mcoding.io"),
-        scheme__in=("https", "http"),
-        filetype__in=(".html", ".php", ""),
-    )
-
     start = time.perf_counter()
     async with httpx.AsyncClient() as client:
-        crawler = Crawler(
-            client=client, urls=["https://mcoding.io"], filterer=filterer, workers=5
-        )
+        crawler = Crawler(client=client, urls=["https://mcoding.io"], workers=5)
         await crawler.run()
     end = time.perf_counter()
 

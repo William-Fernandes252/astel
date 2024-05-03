@@ -1,7 +1,8 @@
 """Top-level package for Naja."""
 
-from . import crawler, parsers
-from .filterers import filters
+from . import crawler, filters, parsers
+
+__all__ = ["crawler", "parsers", "filters"]
 
 __author__ = """William Fernandes Dias"""
 __email__ = "william.winchester1967@gmail.com"

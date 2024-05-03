@@ -46,12 +46,14 @@ httpx = "^0.25.0"
 tldextract = "^3.6.0"
 hypothesis = { version = "^6.88.1", optional = true }
 pytest-xdist = { version = "^3.3.1", optional = true }
+pytest-sugar = { version = "^1.0.0", optional = true }
 
 [tool.poetry.extras]
 test = [
     "pytest",
     "black",
     "isort",
+    "pytest-sugar",
     "mypy",
     "pytest-cov",
     "hypothesis",
@@ -129,7 +131,6 @@ skip_gitignore = true
 python_files = ["tests.py", "test_*.py"]
 python_functions = ["test_*", "it_*", "its_*"]
 testpaths = ["tests"]
-addopts = "--cov=naja"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
