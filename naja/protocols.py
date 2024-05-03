@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Set
+from typing import Set
 from urllib.robotparser import RequestRate
 
 from typing_extensions import Protocol
@@ -14,36 +14,28 @@ class Url(Protocol):
     """
 
     @property
-    def domain(self) -> str:
-        ...
+    def domain(self) -> str: ...
 
     @property
-    def path(self) -> str:
-        ...
+    def path(self) -> str: ...
 
     @property
-    def params(self) -> str:
-        ...
+    def params(self) -> str: ...
 
     @property
-    def scheme(self) -> str:
-        ...
+    def scheme(self) -> str: ...
 
     @property
-    def query(self) -> str:
-        ...
+    def query(self) -> str: ...
 
     @property
-    def fragment(self) -> str:
-        ...
+    def fragment(self) -> str: ...
 
     @property
-    def raw(self) -> str:
-        ...
+    def raw(self) -> str: ...
 
     @property
-    def filetype(self) -> str:
-        ...
+    def filetype(self) -> str: ...
 
 
 class Filterer(Protocol):
@@ -80,8 +72,7 @@ class Parser(Protocol):
 
     found_links: Set[Url]
 
-    def __init__(self, base: str, url_filter: Filterer, *args, **kwargs):
-        ...
+    def __init__(self, base: str, *args, **kwargs): ...
 
     def parse_content(self, text: str) -> None:
         """
@@ -93,8 +84,7 @@ class Parser(Protocol):
         ...
 
     @staticmethod
-    def parse_url(raw_url: str) -> Url:
-        ...
+    def parse_url(raw_url: str) -> Url: ...
 
 
 class RateLimiter(Protocol):

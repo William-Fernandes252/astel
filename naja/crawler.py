@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Generator, Iterable, Set, Type
+import asyncio.constants
+from typing import Callable, Coroutine, Iterable, Set, Type
 
 import httpx
 
 from . import agent, limiters, parsers
-from .protocols import Filterer, Parser, RateLimiter, Url
+from .protocols import Parser, RateLimiter, Url
 
-FoundUrlsHandler = Callable[[Set[str]], Generator[Set[str], None, None]]
+FoundUrlsHandler = Callable[[Set[str]], Coroutine[Set[str], None, None]]
 
 ParserFactory = Type[Parser]
 
@@ -51,7 +52,6 @@ class Crawler:
         self,
         client: httpx.AsyncClient,
         urls: Iterable[str],
-        filterer: Filterer | None = None,
         workers: int = 10,
         limit: int = 25,
         found_urls_handlers: Iterable[FoundUrlsHandler] = [],
@@ -123,7 +123,7 @@ class Crawler:
         self.done.add(url)
 
     async def parse_links(self, base: str, text: str) -> Set[Url]:
-        parser = self.parser_class(base, self.filter_url)
+        parser = self.parser_class(base)
         parser.parse_content(text)
         return parser.found_links
 
@@ -153,7 +153,7 @@ class Crawler:
         return new
 
     async def parse_site_map(self, site_map_path: str) -> Set[Url]:
-        parser = parsers.SiteMapParser(site_map_path, self.filter_url)
+        parser = parsers.SiteMapParser(site_map_path)
         response = await self.client.get(site_map_path)
         parser.parse_content(response.text)
         return parser.found_links

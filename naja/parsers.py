@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib import parse
 from xml.etree import ElementTree as ET
 
-from .protocols import Filterer, Url
+from .protocols import Url
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,8 @@ class UrlParserMixin:
 
 class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
     """
-    A parser that extracts the urls from a webpage and filter them out with the given filterer
+    A parser that extracts the urls from a webpage and filter them out with the
+    given filterer.
 
     :param base: The base URL of the webpage
     :type base: `str`
@@ -62,10 +63,9 @@ class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
     :type url_filter: `Filterer`
     """
 
-    def __init__(self, base: str, url_filter: Filterer, *args, **kwargs):
+    def __init__(self, base: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.base = base
-        self.url_filter = url_filter
         self.found_links: set[Url] = set()
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -73,20 +73,16 @@ class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
             return
 
         for attr, value in attrs:
-            if attr == "href" and type(value) is str:
-                if (
-                    parsed_url := self.url_filter.process(self.parse_url(value))
-                ) is not None:
-                    self.found_links.add(parsed_url)
+            if attr == "href" and isinstance(value, str):
+                self.found_links.add(self.parse_url(value))
 
     def parse_content(self, text: str) -> None:
         super().feed(text)
 
 
 class SiteMapParser(UrlParserMixin):
-    def __init__(self, base: str, url_filter: Filterer, *args, **kwargs):
+    def __init__(self, base: str, *args, **kwargs):
         self.base = base
-        self.url_filter = url_filter
         self.found_links: set[Url] = set()
 
     def parse_content(self, text: str) -> None:
