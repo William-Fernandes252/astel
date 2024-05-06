@@ -4,10 +4,12 @@ from dataclasses import dataclass
 from functools import cached_property
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib import parse
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree as ET  # noqa: N817
 
-from .protocols import Url
+if TYPE_CHECKING:
+    from .protocols import Url
 
 
 @dataclass(frozen=True)
@@ -52,18 +54,15 @@ class UrlParserMixin:
 
 
 class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
-    """
-    A parser that extracts the urls from a webpage and filter them out with the
+    """A parser that extracts the urls from a webpage and filter them out with the
     given filterer.
 
-    :param base: The base URL of the webpage
-    :type base: `str`
-
-    :param url_filter: A `Filterer` instance that filters the URLs found
-    :type url_filter: `Filterer`
+    Args:
+        base (str): The base URL to use to resolve relative URLs
+        url_filter (Filterer): The filterer to use to filter the URLs
     """
 
-    def __init__(self, base: str, *args, **kwargs):
+    def __init__(self, base: str, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.base = base
         self.found_links: set[Url] = set()
@@ -81,7 +80,13 @@ class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
 
 
 class SiteMapParser(UrlParserMixin):
-    def __init__(self, base: str, *args, **kwargs):
+    """Parses a sitemap file to extract the links of interest.
+
+    Args:
+        base (str): The base URL to use to resolve relative URLs
+    """
+
+    def __init__(self, base: str) -> None:
         self.base = base
         self.found_links: set[Url] = set()
 

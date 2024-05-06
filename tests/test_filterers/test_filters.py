@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import TYPE_CHECKING, Type
 
 import pytest
 from hypothesis import assume, given, settings, strategies
@@ -17,8 +17,10 @@ from naja.filters import (
     UrlProperty,
     create_from_kwarg,
 )
-from naja.protocols import Url
 from tests.strategies import filter_kwargs, filters, url_properties, urls
+
+if TYPE_CHECKING:
+    from naja.protocols import Url
 
 
 class FilterTest(ABC):
@@ -33,7 +35,7 @@ class TestIn(FilterTest):
         return In
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         examples=strategies.lists(
             urls().map(lambda url: url.raw), max_size=10, min_size=1
         ),
@@ -41,23 +43,23 @@ class TestIn(FilterTest):
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_checks_if_property_value_is_in_examples(
+    def it_checks_if_url_prop_value_is_in_examples(
         self,
-        property,
-        examples: List[str],
+        url_prop: UrlProperty,
+        examples: list[str],
         sample_url: Url,
         expected: bool,
     ):
         assume(
-            getattr(sample_url, property) in examples
+            getattr(sample_url, url_prop) in examples
             if expected
-            else getattr(sample_url, property) not in examples
+            else getattr(sample_url, url_prop) not in examples
         )
-        f = self.filter_class(property, examples)
+        f = self.filter_class(url_prop, examples)
         assert f.filter(sample_url) == expected
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         examples=strategies.lists(
             urls().map(lambda url: url.raw), min_size=1, max_size=10
         ),
@@ -65,196 +67,196 @@ class TestIn(FilterTest):
         expected=strategies.booleans(),
     )
     @settings(max_examples=3)
-    def it_should_filter_out_if_property_value_is_not_in_examples_when_inverted(
+    def it_should_filter_out_if_url_prop_value_is_not_in_examples_when_inverted(
         self,
-        property,
-        examples: List[str],
+        url_prop: UrlProperty,
+        examples: list[str],
         sample_url: Url,
         expected: bool,
     ):
         assume(
-            getattr(sample_url, property) in examples
+            getattr(sample_url, url_prop) in examples
             if not expected
-            else getattr(sample_url, property) not in examples
+            else getattr(sample_url, url_prop) not in examples
         )
-        f = ~self.filter_class(property, examples)
+        f = ~self.filter_class(url_prop, examples)
         assert f.filter(sample_url) == expected
 
 
 class TestMatches(FilterTest):
     @property
-    def filter_class(self) -> Type[Matches]:
+    def filter_class(self) -> type[Matches]:
         return Matches
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         expected=strategies.booleans(),
     )
     @pytest.mark.parametrize("regex", [re.compile(r"^\w+://")])
     @settings(max_examples=10)
-    def it_should_check_if_property_value_matches_regex(
-        self, property, regex: re.Pattern, sample_url: Url, expected: bool
+    def it_should_check_if_url_prop_value_matches_regex(
+        self, url_prop: UrlProperty, regex: re.Pattern, sample_url: Url, expected: bool
     ):
-        assume(bool(regex.match(getattr(sample_url, property))) == expected)
+        assume(bool(regex.match(getattr(sample_url, url_prop))) == expected)
         assume(isinstance(regex.pattern, str))
-        f = self.filter_class(property, regex)
+        f = self.filter_class(url_prop, regex)
         assert f.filter(sample_url) == expected
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         expected=strategies.booleans(),
     )
     @pytest.mark.parametrize("regex", [re.compile(r"^\w+://")])
     @settings(max_examples=10)
-    def it_should_filter_out_if_property_value_does_not_match_regex_when_inverted(
-        self, property, regex: re.Pattern, sample_url: Url, expected: bool
+    def it_should_filter_out_if_url_prop_value_does_not_match_regex_when_inverted(
+        self, url_prop: UrlProperty, regex: re.Pattern, sample_url: Url, expected: bool
     ):
-        assume(bool(regex.match(getattr(sample_url, property))) != expected)
-        f = ~self.filter_class(property, regex)
+        assume(bool(regex.match(getattr(sample_url, url_prop))) != expected)
+        f = ~self.filter_class(url_prop, regex)
         assert f.filter(sample_url) == expected
 
 
 class TestStartsWith(FilterTest):
     @property
-    def filter_class(self) -> Type[StartsWith]:
+    def filter_class(self) -> type[StartsWith]:
         return StartsWith
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         prefix=strategies.text(min_size=1),
-        case_insensitive=strategies.booleans(),
+        case_sensitive=strategies.booleans(),
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_should_check_if_property_value_starts_with_prefix(
+    def it_should_check_if_url_prop_value_starts_with_prefix(
         self,
-        property: UrlProperty,
+        url_prop: UrlProperty,
         sample_url: Url,
         prefix: str,
-        case_insensitive: bool,
+        case_sensitive: bool,
         expected: bool,
     ):
-        property_value: str = getattr(sample_url, property)
-        assume(property_value.startswith(prefix) == expected)
-        f = self.filter_class(property, prefix, case_insensitive)
+        url_prop_value: str = getattr(sample_url, url_prop)
+        assume(url_prop_value.startswith(prefix) == expected)
+        f = self.filter_class(url_prop, prefix, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         prefix=strategies.text(min_size=1),
-        case_insensitive=strategies.booleans(),
+        case_sensitive=strategies.booleans(),
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_should_filter_out_if_property_value_does_not_start_with_prefix_when_inverted(
+    def it_should_filter_out_if_url_prop_value_does_not_start_with_prefix_when_inverted(
         self,
-        property: UrlProperty,
+        url_prop: UrlProperty,
         sample_url: Url,
         prefix: str,
-        case_insensitive: bool,
+        case_sensitive: bool,
         expected: bool,
     ):
-        property_value: str = getattr(sample_url, property)
-        assume(property_value.startswith(prefix) != expected)
-        f = ~self.filter_class(property, prefix, case_insensitive)
+        url_prop_value: str = getattr(sample_url, url_prop)
+        assume(url_prop_value.startswith(prefix) != expected)
+        f = ~self.filter_class(url_prop, prefix, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
 
 class TestEndsWith(FilterTest):
     @property
-    def filter_class(self) -> Type[EndsWith]:
+    def filter_class(self) -> type[EndsWith]:
         return EndsWith
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         suffix=strategies.text(min_size=1),
-        case_insensitive=strategies.booleans(),
+        case_sensitive=strategies.booleans(),
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_should_check_if_property_value_ends_with_suffix(
+    def it_should_check_if_url_prop_value_ends_with_suffix(
         self,
-        property: UrlProperty,
+        url_prop: UrlProperty,
         sample_url: Url,
         suffix: str,
-        case_insensitive: bool,
+        case_sensitive: bool,
         expected: bool,
     ):
-        property_value: str = getattr(sample_url, property)
-        assume(property_value.endswith(suffix) == expected)
-        f = self.filter_class(property, suffix, case_insensitive)
+        url_prop_value: str = getattr(sample_url, url_prop)
+        assume(url_prop_value.endswith(suffix) == expected)
+        f = self.filter_class(url_prop, suffix, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         suffix=strategies.text(min_size=1),
-        case_insensitive=strategies.booleans(),
+        case_sensitive=strategies.booleans(),
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_should_filter_out_if_property_value_does_not_end_with_suffix_when_inverted(
+    def it_should_filter_out_if_url_prop_value_does_not_end_with_suffix_when_inverted(
         self,
-        property: UrlProperty,
+        url_prop: UrlProperty,
         sample_url: Url,
         suffix: str,
-        case_insensitive: bool,
+        case_sensitive: bool,
         expected: bool,
     ):
-        property_value: str = getattr(sample_url, property)
-        assume(property_value.endswith(suffix) != expected)
-        f = ~self.filter_class(property, suffix, case_insensitive)
+        url_prop_value: str = getattr(sample_url, url_prop)
+        assume(url_prop_value.endswith(suffix) != expected)
+        f = ~self.filter_class(url_prop, suffix, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
 
 class TestContains(FilterTest):
     @property
-    def filter_class(self) -> Type[Contains]:
+    def filter_class(self) -> type[Contains]:
         return Contains
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         text=strategies.text(min_size=1),
-        case_insensitive=strategies.booleans(),
+        case_sensitive=strategies.booleans(),
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_should_check_if_property_value_contains_text(
+    def it_should_check_if_url_prop_value_contains_text(
         self,
-        property: UrlProperty,
+        url_prop: UrlProperty,
         sample_url: Url,
         text: str,
-        case_insensitive: bool,
+        case_sensitive: bool,
         expected: bool,
     ):
-        assume((text in getattr(sample_url, property)) == expected)
-        f = self.filter_class(property, text, case_insensitive)
+        assume((text in getattr(sample_url, url_prop)) == expected)
+        f = self.filter_class(url_prop, text, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
     @given(
-        property=url_properties(),
+        url_prop=url_properties(),
         sample_url=urls(),
         text=strategies.text(min_size=1),
-        case_insensitive=strategies.booleans(),
+        case_sensitive=strategies.booleans(),
         expected=strategies.booleans(),
     )
     @settings(max_examples=10)
-    def it_should_filter_out_if_property_value_does_not_contain_text_when_inverted(
+    def it_should_filter_out_if_url_prop_value_does_not_contain_text_when_inverted(
         self,
-        property: UrlProperty,
+        url_prop: UrlProperty,
         sample_url: Url,
         text: str,
-        case_insensitive: bool,
+        case_sensitive: bool,
         expected: bool,
     ):
-        assume((text not in getattr(sample_url, property)) == expected)
-        f = ~self.filter_class(property, text, case_insensitive)
+        assume((text not in getattr(sample_url, url_prop)) == expected)
+        f = ~self.filter_class(url_prop, text, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
 

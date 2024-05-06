@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import asyncio.constants
-from typing import Callable, Coroutine, Iterable, Set, Type
+from typing import Callable, Coroutine, Iterable, Type
 
 import httpx
 
 from . import agent, limiters, parsers
 from .protocols import Parser, RateLimiter, Url
 
-FoundUrlsHandler = Callable[[Set[str]], Coroutine[Set[str], None, None]]
+FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
 ParserFactory = Type[Parser]
 
@@ -19,36 +19,25 @@ class Crawler:
     A simple asyncronous web crawler that uses httpx to navigate to websites
     asynchronously and do some work with its content.
 
-    :param client: An instance of `httpx.AsyncClient` to use for network requests.
-    :type client: `httpx.AsyncClient`
-
-    :param urls: An iterable of URLs to start the crawling with.
-    :type urls: `Iterable[str]`
-
-    :param filterer: A filterer to filter out URLs to ignore.
-    :type filter_url: `Filter | None`
-
-    :param workers: The number of worker tasks to run in parallel.
-    :type workers: `int`
-
-    :param limit: The maximum number of pages to crawl.
-    :type limit: `int`
-
-    :param found_urls_handlers: A list of FoundUrlsHandler objects to use for processing
-    newly found URLs.
-    :type found_urls_handlers: `Iterable[FoundUrlsHandler]`
-
-    :param parser_class: A parser factory object to use for parsing HTML responses. Defaults to `type(parsers.UrlParser)`.
-    :type parser_class: `ParserFactory | None`
-
-    :param rate_limiter: A rate limiter to limit the number of requests sent per second. Defaults to `limiters.NoLimitRateLimiter`.
-    :type rate_limiter: `RateLimiter | None`
-
-    :return: `None`
-    :rtype: `None`
+    Args:
+        client (httpx.AsyncClient): An instance of `httpx.AsyncClient` to use for
+        network requests.
+        urls (Iterable[str]): An iterable of URLs to start the crawling with.
+        workers (int, optional): The number of worker tasks to run in parallel.
+        Defaults to 10.
+        limit (int, optional): The maximum number of pages to crawl. Defaults to 25.
+        found_urls_handlers (Iterable[FoundUrlsHandler], optional): A list of
+        FoundUrlsHandler objects to use for processing
+        newly found URLs. Defaults to [].
+        parser_class (ParserFactory | None, optional): A parser factory object to use
+        for parsing HTML responses.
+        Defaults to `type(parsers.UrlParser)`. Defaults to None.
+        rate_limiter (limiters.RateLimiter | None, optional): A rate limiter to limit
+        the number of requests sent per second.
+        Defaults to `limiters.NoLimitRateLimiter`. Defaults to None.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         client: httpx.AsyncClient,
         urls: Iterable[str],
@@ -100,16 +89,11 @@ class Crawler:
 
     async def process_one(self) -> None:
         task = await self.todo.get()
-        try:
-            await task
-        except Exception:
-            # logging and retrying
-            pass
-        finally:
-            self.todo.task_done()
+        await task
+        self.todo.task_done()
 
     async def crawl(self, url: str) -> None:
-        await self.rate_limiter.limit(url)
+        await self.rate_limiter.limit(url)  # type: ignore[call-arg]
 
         response = await self.client.get(url, follow_redirects=True)
 
@@ -122,27 +106,27 @@ class Crawler:
 
         self.done.add(url)
 
-    async def parse_links(self, base: str, text: str) -> Set[Url]:
+    async def parse_links(self, base: str, text: str) -> set[Url]:
         parser = self.parser_class(base)
         parser.parse_content(text)
         return parser.found_links
 
-    async def _acknowledge_domains(self, parsed_urls: Set[Url]) -> Set[Url]:
+    async def _acknowledge_domains(self, parsed_urls: set[Url]) -> set[Url]:
         new = parsed_urls - self.urls_seen
         for result in new:
             self.agent.respect(
                 result.domain, f"{result.scheme}://{result.domain}/robots.txt"
             )
 
-            async with asyncio.TaskGroup() as tg:
-                for site_map_path in self.agent.get_site_maps(result.domain) or []:
-                    tg.create_task(
-                        self._acknowledge_domains(
-                            await self.parse_site_map(site_map_path)
-                        )
-                    )
+            tasks = [
+                asyncio.create_task(
+                    self._acknowledge_domains(await self.parse_site_map(site_map_path))
+                )
+                for site_map_path in self.agent.get_site_maps(result.domain) or []
+            ]
+            await asyncio.wait(tasks)
 
-            self.rate_limiter.configure(
+            self.rate_limiter.configure(  # type: ignore[call-arg]
                 domain=result.domain,
                 crawl_delay=self.agent.get_crawl_delay(result.domain),
                 request_rate=self.agent.get_request_rate(result.domain),
@@ -152,19 +136,20 @@ class Crawler:
 
         return new
 
-    async def parse_site_map(self, site_map_path: str) -> Set[Url]:
+    async def parse_site_map(self, site_map_path: str) -> set[Url]:
         parser = parsers.SiteMapParser(site_map_path)
         response = await self.client.get(site_map_path)
         parser.parse_content(response.text)
         return parser.found_links
 
-    async def on_found_links(self, urls: Set[Url]) -> None:
+    async def on_found_links(self, urls: set[Url]) -> None:
         new = await self._acknowledge_domains(urls)
 
         if len(self._found_urls_handlers) > 0:
-            async with asyncio.TaskGroup() as tg:
-                for handler in self._found_urls_handlers:
-                    tg.create_task(handler({result.raw for result in new}))
+            await asyncio.wait(
+                asyncio.create_task(handler({result.raw for result in new}))
+                for handler in self._found_urls_handlers
+            )
 
         for result in new:
             await self.put_todo(result.raw)
@@ -185,19 +170,15 @@ class Crawler:
 async def main() -> None:
     import time
 
-    start = time.perf_counter()
+    time.perf_counter()
     async with httpx.AsyncClient() as client:
         crawler = Crawler(client=client, urls=["https://mcoding.io"], workers=5)
         await crawler.run()
-    end = time.perf_counter()
+    time.perf_counter()
 
     seen = crawler.urls_seen
-    print("Results:")
-    for result in seen:
-        print(result.raw)
-    print(f"Crawled: {len(crawler.done)} URLs")
-    print(f"Found: {len(seen)} URLs")
-    print(f"Time: {end - start} seconds")
+    for _result in seen:
+        pass
 
 
 if __name__ == "__main__":

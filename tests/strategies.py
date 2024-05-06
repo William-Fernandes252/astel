@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Type
+from typing import Any, Dict, Type
 
 from hypothesis import provisional, strategies
 
@@ -49,10 +49,7 @@ def _f_classes(draw: strategies.DrawFn) -> Type[Filter]:
 
 
 @strategies.composite
-def filters(
-    draw: strategies.DrawFn,
-    props: strategies.SearchStrategy[UrlProperty] = url_properties(),
-) -> Filter:
+def filters(draw: strategies.DrawFn) -> Filter:
     """Strategy to generate a filter.
 
     Args:
@@ -64,7 +61,7 @@ def filters(
         Filter: A filter object.
     """
     f_class = draw(_f_classes())
-    prop = draw(props)
+    prop = draw(url_properties())
     if issubclass(f_class, In):
         examples = draw(strategies.lists(strategies.text(min_size=1, max_size=10)))
         return f_class(prop, examples)
@@ -73,13 +70,13 @@ def filters(
         return f_class(prop, regex)
     if issubclass(f_class, TextFilter):
         text = draw(strategies.text(min_size=1, max_size=10))
-        case_insensitive = draw(strategies.booleans())
-        return f_class(prop, text, case_insensitive)
+        case_sensitive = draw(strategies.booleans())
+        return f_class(prop, text, case_sensitive=case_sensitive)
     return f_class(prop)
 
 
 @strategies.composite
-def filter_kwargs(draw: strategies.DrawFn):
+def filter_kwargs(draw: strategies.DrawFn) -> Dict[str, Any]:
     """Strategy to generate filter kwargs.
 
     Returns:
