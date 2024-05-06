@@ -2,18 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import time
+from abc import ABC, abstractmethod
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, TypedDict
 
 import tldextract
 
-from . import errors, protocols
+from . import errors
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from urllib.robotparser import RequestRate
 
 __all__ = [
+    "RateLimiter",
     "StaticRateLimiter",
     "NoLimitRateLimiter",
     "TokenBucketRateLimiter",
@@ -21,7 +23,53 @@ __all__ = [
 ]
 
 
-class StaticRateLimiter:
+class RateLimiterConfig(TypedDict):
+    """Rate limiting configuration.
+
+    Attributes:
+        domain (str): The domain to crawl.
+        crawl_delay (str, optional): A string representing the delay between each
+        crawl in the format "<number><unit>" (as of the format used by
+        request_rate (RequestRate): The rate at which to make requests.
+    """
+
+    domain: Optional[str]
+    crawl_delay: Optional[str]
+    request_rate: Optional[RequestRate]
+
+
+class RateLimiter(ABC):
+    """
+    Limits the amount of concurrent network requests to certain websites
+    in order to avoid bans and throttling.
+    """
+
+    @abstractmethod
+    def configure(
+        self,
+        config: RateLimiterConfig,
+    ) -> None:
+        """Configures the rate limiter to respect the rules defined by the
+        domain with the given parameters.
+
+        In the case of a craw delay, the craw delay is ignored.
+
+        Args:
+            config (RateLimiterConfig): The configuration to apply.
+        """
+        ...
+
+    @abstractmethod
+    async def limit(self, *args, **kwargs) -> None:
+        """Asynchronously limits the specified URL.
+
+        Args:
+            url (str): The URL to limit
+        """
+        ...
+
+
+class StaticRateLimiter(RateLimiter):
     """Limit the number of requests per second by waiting for a
     specified amount of time between requests
 
@@ -32,20 +80,20 @@ class StaticRateLimiter:
     def __init__(self, time_in_seconds: float) -> None:
         self.time = time_in_seconds
 
-    async def limit(self, url) -> None:  # noqa: ANN001, ARG002
+    async def limit(self) -> None:
         """Limit by wainting for the specified amount of time"""
         await asyncio.sleep(self.time)
 
     def configure(
         self,
-        *,
-        crawl_delay: str | None = None,
-        request_rate: RequestRate | None = None,
+        config: RateLimiterConfig,
     ) -> None:
-        if crawl_delay is not None:
-            new_request_delay = float(crawl_delay)
-        elif request_rate is not None:
-            new_request_delay = request_rate.seconds / request_rate.requests
+        if config["crawl_delay"] is not None:
+            new_request_delay = float(config["crawl_delay"])
+        elif config["request_rate"] is not None:
+            new_request_delay = (
+                config["request_rate"].seconds / config["request_rate"].requests
+            )
 
         if new_request_delay < 0:
             msg = "The new request delay must be greater "
@@ -57,7 +105,7 @@ class StaticRateLimiter:
             self.time = new_request_delay
 
 
-class NoLimitRateLimiter:
+class NoLimitRateLimiter(RateLimiter):
     """
     A limiter that does not limit the requests. Keep in mind that sending a
     lot of requests per second can result in throttling or even bans.
@@ -69,13 +117,13 @@ class NoLimitRateLimiter:
         """
         await asyncio.sleep(0)
 
-    def configure(self) -> None:
+    def configure(self, *args, **kwargs) -> None:
         """
         Does nothing
         """
 
 
-class TokenBucketRateLimiter:
+class TokenBucketRateLimiter(RateLimiter):
     """Limit the requests by using the token bucket algorithm
 
     Args:
@@ -139,27 +187,17 @@ class TokenBucketRateLimiter:
 
     def configure(
         self,
-        *,
-        crawl_delay: str | None = None,
-        request_rate: RequestRate | None = None,
+        config: RateLimiterConfig,
     ) -> None:
         """Configures the rate at which requests are made to a domain by setting the
         tokens per second.
-
-        Args:
-            crawl_delay (str, optional): The amount of time (in seconds) to wait between
-            requests. Defaults to None.
-            request_rate (RequestRate, optional): The rate at which requests are made to
-            a domain. Defaults to None.
-
-        Raises:
-            errors.InvalidConfigurationError: If the new computed token rate is less
-            than or equal to 0.
         """
-        if crawl_delay is not None:
-            new_token_rate = 1 / int(crawl_delay)
-        elif request_rate is not None:
-            new_token_rate = request_rate.requests / request_rate.seconds
+        if config["crawl_delay"] is not None:
+            new_token_rate = 1 / int(config["crawl_delay"])
+        elif config["request_rate"] is not None:
+            new_token_rate = (
+                config["request_rate"].requests / config["request_rate"].seconds
+            )
         else:
             return
 
@@ -171,23 +209,23 @@ class TokenBucketRateLimiter:
             self._tokens_per_second = new_token_rate
 
 
-class PerDomainRateLimiter:
+class PerDomainRateLimiter(RateLimiter):
     """Limit the number of requests per domain using its especified
     limiter instance if given, otherwise uses the default limiter
     """
 
     __slots__ = {"default_limiter_factory", "_domain_to_limiter"}
 
-    DEFAULT_LIMITER_FACTORY: Callable[[], protocols.RateLimiter] = partial(
+    DEFAULT_LIMITER_FACTORY: Callable[[], RateLimiter] = partial(
         StaticRateLimiter, time_in_seconds=1  # type: ignore[assignment]
     )
 
     def __init__(
         self,
-        limiter_factory: Callable[[], protocols.RateLimiter] | None = None,
+        limiter_factory: Callable[[], RateLimiter] | None = None,
     ) -> None:
         self.default_limiter_factory = limiter_factory or self.DEFAULT_LIMITER_FACTORY
-        self._domain_to_limiter: dict[str, protocols.RateLimiter] = {}
+        self._domain_to_limiter: dict[str, RateLimiter] = {}
 
     async def limit(self, url: str) -> None:
         """Limit by waiting for the limiting of the limiter instance corresponding to
@@ -196,9 +234,7 @@ class PerDomainRateLimiter:
             self.extract_domain(url), self.default_limiter_factory()
         ).limit(url)
 
-    def add_domain(
-        self, url: str, limiter: protocols.RateLimiter | None = None
-    ) -> None:
+    def add_domain(self, url: str, limiter: RateLimiter | None = None) -> None:
         """Adds a new domain to the limited domains with an optional rate limiter.
 
         Args:
@@ -224,14 +260,7 @@ class PerDomainRateLimiter:
         """
         return tldextract.extract(url).domain
 
-    def configure(
-        self,
-        *,
-        domain: str,
-        crawl_delay: str | None = None,
-        request_rate: RequestRate | None = None,
-        **kwargs,
-    ) -> None:
+    def configure(self, config: RateLimiterConfig) -> None:
         """Configures the rate at which requests are made to a domain by defining its
         corresponding limiter.
 
@@ -247,13 +276,13 @@ class PerDomainRateLimiter:
             errors.InvalidConfigurationError: If the new computed token rate is less
             than or equal to 0.
         """
-        if domain not in self._domain_to_limiter:
-            self.add_domain(domain)
-
-        return self._domain_to_limiter[domain].configure(
-            crawl_delay=crawl_delay, request_rate=request_rate, **kwargs
-        )
+        if (
+            config["domain"] is not None
+            and config["domain"] not in self._domain_to_limiter
+        ):
+            self.add_domain(config["domain"])
+            self._domain_to_limiter[config["domain"]].configure(config)
 
     @property
-    def domain_to_limiter(self) -> dict[str, protocols.RateLimiter]:
+    def domain_to_limiter(self) -> dict[str, RateLimiter]:
         return self._domain_to_limiter

@@ -7,17 +7,14 @@ from typing import Callable, Coroutine, Iterable, Type
 import httpx
 
 from . import agent, limiters, parsers
-from .protocols import Parser, RateLimiter, Url
 
 FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
-ParserFactory = Type[Parser]
+ParserFactory = Type[parsers.Parser]
 
 
 class Crawler:
-    """
-    A simple asyncronous web crawler that uses httpx to navigate to websites
-    asynchronously and do some work with its content.
+    """A simple asyncronous web crawler that uses httpx to navigate to websites
 
     Args:
         client (httpx.AsyncClient): An instance of `httpx.AsyncClient` to use for
@@ -45,7 +42,7 @@ class Crawler:
         limit: int = 25,
         found_urls_handlers: Iterable[FoundUrlsHandler] = [],
         parser_class: ParserFactory | None = None,
-        rate_limiter: RateLimiter | None = None,
+        rate_limiter: limiters.RateLimiter | None = None,
         user_agent: agent.UserAgent | None = None,
     ) -> None:
         self.client = client
@@ -53,7 +50,7 @@ class Crawler:
         self.todo: asyncio.Queue[asyncio.Task] = asyncio.Queue()
 
         self.start_urls = set(urls)
-        self.urls_seen: set[Url] = set()
+        self.urls_seen: set[parsers.Url] = set()
         self.done: set[str] = set()
         self._found_urls_handlers = set(found_urls_handlers)
         self.agent = user_agent or agent.UserAgent("naja")
@@ -70,9 +67,7 @@ class Crawler:
         """
         Run the crawler.
         """
-        await self.on_found_links(
-            {self.parser_class.parse_url(url) for url in self.start_urls}
-        )
+        await self.on_found_links({parsers.parse_url(url) for url in self.start_urls})
 
         workers = [asyncio.create_task(self.worker()) for _ in range(self.num_workers)]
         await self.todo.join()
@@ -106,12 +101,14 @@ class Crawler:
 
         self.done.add(url)
 
-    async def parse_links(self, base: str, text: str) -> set[Url]:
+    async def parse_links(self, base: str, text: str) -> set[parsers.Url]:
         parser = self.parser_class(base)
         parser.parse_content(text)
         return parser.found_links
 
-    async def _acknowledge_domains(self, parsed_urls: set[Url]) -> set[Url]:
+    async def _acknowledge_domains(
+        self, parsed_urls: set[parsers.Url]
+    ) -> set[parsers.Url]:
         new = parsed_urls - self.urls_seen
         for result in new:
             self.agent.respect(
@@ -136,13 +133,13 @@ class Crawler:
 
         return new
 
-    async def parse_site_map(self, site_map_path: str) -> set[Url]:
+    async def parse_site_map(self, site_map_path: str) -> set[parsers.Url]:
         parser = parsers.SiteMapParser(site_map_path)
         response = await self.client.get(site_map_path)
         parser.parse_content(response.text)
         return parser.found_links
 
-    async def on_found_links(self, urls: set[Url]) -> None:
+    async def on_found_links(self, urls: set[parsers.Url]) -> None:
         new = await self._acknowledge_domains(urls)
 
         if len(self._found_urls_handlers) > 0:

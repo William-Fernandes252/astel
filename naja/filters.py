@@ -18,7 +18,7 @@ from typing import (
     cast,
 )
 
-from naja.protocols import Url
+from naja.parsers import Url
 
 __all__ = [
     "UrlProperty",

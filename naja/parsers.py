@@ -1,15 +1,67 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Protocol, Set
 from urllib import parse
-from xml.etree import ElementTree as ET  # noqa: N817
+from xml.etree import ElementTree
 
-if TYPE_CHECKING:
-    from .protocols import Url
+
+class Url(Protocol):
+    """
+    Model of a URL for the library to work with.
+    """
+
+    @property
+    def domain(self) -> str: ...
+
+    @property
+    def path(self) -> str: ...
+
+    @property
+    def params(self) -> str: ...
+
+    @property
+    def scheme(self) -> str: ...
+
+    @property
+    def query(self) -> str: ...
+
+    @property
+    def fragment(self) -> str: ...
+
+    @property
+    def raw(self) -> str: ...
+
+    @property
+    def filetype(self) -> str: ...
+
+
+class Parser(ABC):
+    """Parses the content of a file (webpages, or sitemaps, for example) to extract
+    the links of interest (which are stored in the `found_links`
+    attribute as instances of `Url`).
+
+    Args:
+        base (str): The base URL to use to resolve relative URLs
+    """
+
+    found_links: Set[Url]
+
+    @abstractmethod
+    def __init__(self, base: str, *args, **kwargs) -> None: ...
+
+    @abstractmethod
+    def parse_content(self, text: str) -> None:
+        """Process the content of a website and update the `found_links` attribute
+
+        Args:
+            text (str): The content of the website
+        """
+        ...
 
 
 @dataclass(frozen=True)
@@ -39,21 +91,27 @@ class ParsedUrl:
         return Path(self.path).suffix.replace(".", "")
 
 
-class UrlParserMixin:
-    @staticmethod
-    def parse_url(url: str) -> Url:
-        result = parse.urlparse(url)
-        return ParsedUrl(
-            result.scheme,
-            result.netloc,
-            result.path,
-            result.params,
-            result.query,
-            result.fragment,
-        )
+def parse_url(url: str) -> Url:
+    """Parse a URL into its components.
+
+    Args:
+        url (str): The URL to parse
+
+    Returns:
+        Url: The parsed URL
+    """
+    result = parse.urlparse(url)
+    return ParsedUrl(
+        result.scheme,
+        result.netloc,
+        result.path,
+        result.params,
+        result.query,
+        result.fragment,
+    )
 
 
-class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
+class HTMLAnchorsParser(HTMLParser, Parser):
     """A parser that extracts the urls from a webpage and filter them out with the
     given filterer.
 
@@ -73,13 +131,13 @@ class HTMLAnchorsParser(HTMLParser, UrlParserMixin):
 
         for attr, value in attrs:
             if attr == "href" and isinstance(value, str):
-                self.found_links.add(self.parse_url(value))
+                self.found_links.add(parse_url(value))
 
     def parse_content(self, text: str) -> None:
         super().feed(text)
 
 
-class SiteMapParser(UrlParserMixin):
+class SiteMapParser(Parser):
     """Parses a sitemap file to extract the links of interest.
 
     Args:
@@ -91,7 +149,7 @@ class SiteMapParser(UrlParserMixin):
         self.found_links: set[Url] = set()
 
     def parse_content(self, text: str) -> None:
-        root = ET.fromstring(text)
+        root = ElementTree.fromstring(text)
 
         for url_element in root.iter(
             "{http://www.sitemaps.org/schemas/sitemap/0.9}url"
@@ -100,4 +158,4 @@ class SiteMapParser(UrlParserMixin):
                 "{http://www.sitemaps.org/schemas/sitemap/0.9}loc"
             )
             if loc_element is not None and loc_element.text:
-                self.found_links.add(self.parse_url(loc_element.text))
+                self.found_links.add(parse_url(loc_element.text))
