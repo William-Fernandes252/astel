@@ -3,15 +3,13 @@ from __future__ import annotations
 import asyncio
 import time
 from abc import ABC, abstractmethod
-from functools import partial
-from typing import TYPE_CHECKING, Optional, TypedDict
+from typing import TYPE_CHECKING, Optional, TypedDict, cast
 
 import tldextract
 
 from . import errors
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from urllib.robotparser import RequestRate
 
 __all__ = [
@@ -214,25 +212,33 @@ class PerDomainRateLimiter(RateLimiter):
     limiter instance if given, otherwise uses the default limiter
     """
 
-    __slots__ = {"default_limiter_factory", "_domain_to_limiter"}
-
-    DEFAULT_LIMITER_FACTORY: Callable[[], RateLimiter] = partial(
-        StaticRateLimiter, time_in_seconds=1  # type: ignore[assignment]
-    )
+    default_limiter: RateLimiter | None = None
+    _domain_to_limiter: dict[str, RateLimiter]
 
     def __init__(
         self,
-        limiter_factory: Callable[[], RateLimiter] | None = None,
+        default_limiter: RateLimiter | None = None,
     ) -> None:
-        self.default_limiter_factory = limiter_factory or self.DEFAULT_LIMITER_FACTORY
-        self._domain_to_limiter: dict[str, RateLimiter] = {}
+        self.default_limiter = default_limiter
+        self._domain_to_limiter = {}
 
     async def limit(self, url: str) -> None:
-        """Limit by waiting for the limiting of the limiter instance corresponding to
-        the domain of the given url"""
-        await self._domain_to_limiter.get(
-            self.extract_domain(url), self.default_limiter_factory()
-        ).limit(url)
+        """Limit the requests to the given URL by its domain.
+
+        Args:
+            url (str): The URL to limit
+
+        Raises:
+            errors.InvalidConfigurationError: If no limiter is found for the domain.
+        """
+        limiter = self._domain_to_limiter.get(
+            self.extract_domain(url), self.default_limiter
+        )
+        if limiter is None:
+            msg = "No limiter found for the domain."
+            raise errors.InvalidConfigurationError(msg)
+
+        await limiter.limit()
 
     def add_domain(self, url: str, limiter: RateLimiter | None = None) -> None:
         """Adds a new domain to the limited domains with an optional rate limiter.
@@ -249,7 +255,13 @@ class PerDomainRateLimiter(RateLimiter):
         if domain == "":
             raise errors.InvalidUrlError(url)
 
-        self._domain_to_limiter[domain] = limiter or self.default_limiter_factory()
+        if limiter is None and self.default_limiter is None:
+            msg = "No limiter was provided and no default limiter was set."
+            raise errors.InvalidConfigurationError(msg)
+
+        self._domain_to_limiter[domain] = cast(
+            RateLimiter, limiter or self.default_limiter
+        )
 
     @staticmethod
     def extract_domain(url: str) -> str:

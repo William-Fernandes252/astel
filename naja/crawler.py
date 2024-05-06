@@ -4,9 +4,10 @@ import asyncio
 import asyncio.constants
 from typing import Callable, Coroutine, Iterable, Type
 
-import httpx
+from naja import agent
+from naja.options import CrawlerOptions, merge_with_default_options
 
-from . import agent, limiters, parsers
+from . import parsers
 
 FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
@@ -34,76 +35,64 @@ class Crawler:
         Defaults to `limiters.NoLimitRateLimiter`. Defaults to None.
     """
 
-    def __init__(  # noqa: PLR0913
-        self,
-        client: httpx.AsyncClient,
-        urls: Iterable[str],
-        workers: int = 10,
-        limit: int = 25,
-        found_urls_handlers: Iterable[FoundUrlsHandler] = [],
-        parser_class: ParserFactory | None = None,
-        rate_limiter: limiters.RateLimiter | None = None,
-        user_agent: agent.UserAgent | None = None,
+    def __init__(
+        self, urls: Iterable[str], options: CrawlerOptions | None = None
     ) -> None:
-        self.client = client
+        options = merge_with_default_options(options)
 
         self.todo: asyncio.Queue[asyncio.Task] = asyncio.Queue()
-
+        self.client = options["client"]
         self.start_urls = set(urls)
         self.urls_seen: set[parsers.Url] = set()
         self.done: set[str] = set()
-        self._found_urls_handlers = set(found_urls_handlers)
-        self.agent = user_agent or agent.UserAgent("naja")
-
-        self.parser_class = parser_class or parsers.HTMLAnchorsParser
-
-        self.rate_limiter = rate_limiter or limiters.NoLimitRateLimiter()
-
-        self.num_workers = workers
-        self.limit = limit
+        self.parser_class = options["parser_class"]
+        self.agent = agent.UserAgent(options["user_agent"])
+        self.rate_limiter = options["rate_limiter"]
+        self.num_workers = options["workers"]
+        self.limit = options["limit"]
         self.total_pages = 0
 
     async def run(self) -> None:
         """
         Run the crawler.
         """
-        await self.on_found_links({parsers.parse_url(url) for url in self.start_urls})
+        await self._on_found_links({parsers.parse_url(url) for url in self.start_urls})
 
-        workers = [asyncio.create_task(self.worker()) for _ in range(self.num_workers)]
+        workers = [asyncio.create_task(self._worker()) for _ in range(self.num_workers)]
         await self.todo.join()
 
         for worker in workers:
             worker.cancel()
 
-    async def worker(self) -> None:
+    async def _worker(self) -> None:
         while True:
             try:
-                await self.process_one()
+                await self._process_one()
             except asyncio.CancelledError:
                 return
 
-    async def process_one(self) -> None:
+    async def _process_one(self) -> None:
         task = await self.todo.get()
         await task
         self.todo.task_done()
 
-    async def crawl(self, url: str) -> None:
+    async def _crawl(self, url: str) -> None:
         await self.rate_limiter.limit(url)  # type: ignore[call-arg]
 
         response = await self.client.get(url, follow_redirects=True)
 
-        found_links = await self.parse_links(
+        found_links = await self._parse_links(
             base=str(response.url),
             text=response.text,
         )
 
-        await self.on_found_links(found_links)
+        await self._on_found_links(found_links)
 
         self.done.add(url)
 
-    async def parse_links(self, base: str, text: str) -> set[parsers.Url]:
-        parser = self.parser_class(base)
-        parser.parse_content(text)
+    async def _parse_links(self, base: str, text: str) -> set[parsers.Url]:
+        parser = self.parser_class(base=base)
+        parser.feed(text)
         return parser.found_links
 
     async def _acknowledge_domains(
@@ -136,50 +125,18 @@ class Crawler:
     async def parse_site_map(self, site_map_path: str) -> set[parsers.Url]:
         parser = parsers.SiteMapParser(site_map_path)
         response = await self.client.get(site_map_path)
-        parser.parse_content(response.text)
+        parser.feed(response.text)
         return parser.found_links
 
-    async def on_found_links(self, urls: set[parsers.Url]) -> None:
-        new = await self._acknowledge_domains(urls)
+    async def _on_found_links(self, urls: set[parsers.Url]) -> None:
+        for result in await self._acknowledge_domains(urls):
+            await self._put_todo(result.raw)
 
-        if len(self._found_urls_handlers) > 0:
-            await asyncio.wait(
-                asyncio.create_task(handler({result.raw for result in new}))
-                for handler in self._found_urls_handlers
-            )
-
-        for result in new:
-            await self.put_todo(result.raw)
-
-    async def put_todo(self, url: str) -> None:
+    async def _put_todo(self, url: str) -> None:
         if self.total_pages > self.limit:
             return
         self.total_pages += 1
-        await self.todo.put(asyncio.create_task(self.crawl(url)))
-
-    def add_found_urls_handler(self, handler: FoundUrlsHandler) -> None:
-        self._found_urls_handlers.add(handler)
-
-    def remove_found_urls_handler(self, handler: FoundUrlsHandler) -> None:
-        self._found_urls_handlers.discard(handler)
-
-
-async def main() -> None:
-    import time
-
-    time.perf_counter()
-    async with httpx.AsyncClient() as client:
-        crawler = Crawler(client=client, urls=["https://mcoding.io"], workers=5)
-        await crawler.run()
-    time.perf_counter()
-
-    seen = crawler.urls_seen
-    for _result in seen:
-        pass
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        await self.todo.put(asyncio.create_task(self._crawl(url)))
 
 
 # TODO:

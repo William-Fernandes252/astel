@@ -46,22 +46,43 @@ class Parser(ABC):
     attribute as instances of `Url`).
 
     Args:
-        base (str): The base URL to use to resolve relative URLs
+        base (Union[str, None]): The base URL to use to resolve relative URLs.
+        Defaults to `None`.
     """
 
-    found_links: Set[Url]
+    _found_links: Set[Url]
+    _base: str | None
+
+    def __init__(self, base: str | None = None) -> None:
+        self._base = base
+        self._found_links = set()
 
     @abstractmethod
-    def __init__(self, base: str, *args, **kwargs) -> None: ...
-
-    @abstractmethod
-    def parse_content(self, text: str) -> None:
+    def feed(self, text: str) -> None:
         """Process the content of a website and update the `found_links` attribute
 
         Args:
             text (str): The content of the website
         """
         ...
+
+    def reset(self, base: str | None = None) -> None:
+        """Reset the parser to its initial state.
+
+        Args:
+            base (Union[str, None], optional): The base URL to use to resolve relative
+            URLs. Defaults to `None`.
+        """
+        self._base = base
+        self._found_links.clear()
+
+    @property
+    def base(self) -> str | None:
+        return self._base
+
+    @property
+    def found_links(self) -> Set[Url]:
+        return self._found_links
 
 
 @dataclass(frozen=True)
@@ -91,16 +112,18 @@ class ParsedUrl:
         return Path(self.path).suffix.replace(".", "")
 
 
-def parse_url(url: str) -> Url:
+def parse_url(url: str, base: str | None = None) -> Url:
     """Parse a URL into its components.
 
     Args:
         url (str): The URL to parse
+        base (str, optional): The base URL to use to resolve relative URLs.
+        Defaults to None.
 
     Returns:
         Url: The parsed URL
     """
-    result = parse.urlparse(url)
+    result = parse.urlparse(url if base is None else parse.urljoin(base, url))
     return ParsedUrl(
         result.scheme,
         result.netloc,
@@ -120,21 +143,21 @@ class HTMLAnchorsParser(HTMLParser, Parser):
         url_filter (Filterer): The filterer to use to filter the URLs
     """
 
-    def __init__(self, base: str, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.base = base
-        self.found_links: set[Url] = set()
-
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag != "a":
             return
 
         for attr, value in attrs:
             if attr == "href" and isinstance(value, str):
-                self.found_links.add(parse_url(value))
+                self.found_links.add(parse_url(value, self.base))
 
-    def parse_content(self, text: str) -> None:
+    def feed(self, text: str) -> None:
         super().feed(text)
+
+    def reset(self, base: str | None = None) -> None:
+        super().reset()
+        self._base = base
+        self._found_links.clear()
 
 
 class SiteMapParser(Parser):
@@ -144,11 +167,7 @@ class SiteMapParser(Parser):
         base (str): The base URL to use to resolve relative URLs
     """
 
-    def __init__(self, base: str) -> None:
-        self.base = base
-        self.found_links: set[Url] = set()
-
-    def parse_content(self, text: str) -> None:
+    def feed(self, text: str) -> None:
         root = ElementTree.fromstring(text)
 
         for url_element in root.iter(
