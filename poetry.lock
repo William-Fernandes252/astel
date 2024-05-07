@@ -429,6 +429,20 @@ files = [
 ]
 
 [[package]]
+name = "eventemitter"
+version = "0.2.0"
+description = "Tools for working with async events."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "eventemitter-0.2.0.tar.gz", hash = "sha256:0147a0d6fc8b03641997b337b8c755e89608bd0784335a4fec50bde1e31f8d6f"},
+]
+
+[package.extras]
+testing = ["pep257", "pep8", "pyenchant", "pyflakes", "pylint", "pytest", "pytest-cov"]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.1"
 description = "Backport of PEP 654 (exception groups)"
@@ -1856,4 +1870,4 @@ test = ["hypothesis", "mypy", "pytest", "pytest-cov", "pytest-sugar", "pytest-xd
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.18,<4.0"
-content-hash = "e32bed6f3f1345abcd75af0f0ebf49d85a52e1c3b0047d51e7ece1becd298169"
+content-hash = "0df1a7d4ae35f855225655102c0c8564e10cd3623e3362b4d10f75909f5c9534"

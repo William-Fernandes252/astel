@@ -4,9 +4,10 @@ import asyncio
 import asyncio.constants
 from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, Set, Type
 
+from eventemitter import EventEmitter
 from typing_extensions import Self
 
-from naja import agent, filters, limiters
+from naja import agent, events, filters, limiters
 from naja.options import CrawlerOptions, merge_with_default_options
 
 from . import parsers
@@ -52,6 +53,7 @@ class Crawler:
     _limit: int
     _total_pages: int
     _filters: list[filters.Filter]
+    _event_emitter: EventEmitter
 
     def __init__(
         self, urls: Iterable[str], options: CrawlerOptions | None = None
@@ -70,6 +72,7 @@ class Crawler:
         self._limit = options["limit"]
         self._total_pages = 0
         self._filters: list[filters.Filter] = []
+        self._event_emitter = options["event_emitter"]
 
     async def run(self) -> None:
         """Run the crawler."""
@@ -96,18 +99,25 @@ class Crawler:
         self._todo.task_done()
 
     async def _crawl(self, url: str) -> None:
-        await self._rate_limiter.limit(url)  # type: ignore[call-arg]
+        await self._rate_limiter.limit(url)
 
-        response = await self._client.get(url, follow_redirects=True)
+        response = await self._send_request(url)
+        self._event_emitter.emit(events.Event.RESPONSE, response)
 
-        found_links = await self._parse_links(
-            base=str(response.url),
-            text=response.text,
+        await self._on_found_links(
+            await self._parse_links(
+                base=str(response.url),
+                text=response.text,
+            )
         )
 
-        await self._on_found_links(found_links)
-
         self._done.add(url)
+        self._event_emitter.emit(events.Event.DONE, parsers.parse_url(url))
+
+    async def _send_request(self, url: str) -> httpx.Response:
+        request = httpx.Request("GET", url, headers={"User-Agent": self._agent.name})
+        self._event_emitter.emit(events.Event.REQUEST, request)
+        return await self._client.send(request, follow_redirects=True)
 
     async def _parse_links(self, base: str, text: str) -> set[parsers.Url]:
         parser = self._parser_class(base=base)
@@ -195,6 +205,8 @@ class Crawler:
         return self
 
     async def _on_found_links(self, urls: set[parsers.Url]) -> None:
+        for url in urls:
+            self._event_emitter.emit(events.Event.URL_FOUND, url)
         for result in await self._acknowledge_domains(urls):
             await self._put_todo(result.raw)
 
@@ -204,36 +216,67 @@ class Crawler:
         self._total_pages += 1
         await self._todo.put(asyncio.create_task(self._crawl(url)))
 
+    def on(self, event: events.Event, handler: events.Handler) -> None:
+        """Add an event handler to the crawler.
+
+        An event is emitted when
+        - a request is ready to be sent (`Event.REQUEST`): the `httpx.Request` object is
+        passed to the handler.
+        - a response is received (`Event.RESPONSE`): the `httpx.Response` object is
+        passed to the handler.
+        - an error occurs (`Event.ERROR`): the `Error` object is passed to the handler.
+        - a URL is done being processed (`Event.DONE`): the `naja.parsers.Url` object
+        is passed to the handler.
+        - a URL is found in a page (`Event.URL_FOUND`): the `naja.parsers.Url` object is
+        passed to the handler.
+
+        Args:
+            event (str): The event to add the handler to.
+            handler (Callable): The handler to add to the event.
+        """
+        self._event_emitter.on(event, handler)
+
     @property
     def total_pages(self) -> int:
+        """The total number of pages queued by the crawler."""
         return self._total_pages
 
     @property
     def done(self) -> set[str]:
+        """The URLs that have been crawled by the crawler."""
         return self._done
 
     @property
     def urls_seen(self) -> set[parsers.Url]:
+        """The URLs that have been seen by the crawler."""
         return self._urls_seen
 
     @property
     def rate_limiter(self) -> limiters.RateLimiter:
+        """The rate limiter used by the crawler."""
         return self._rate_limiter
 
     @property
     def num_workers(self) -> int:
+        """The number of worker tasks used by the crawler."""
         return self._num_workers
 
     @property
     def limit(self) -> int:
+        """The maximum number of pages to crawl.
+
+        It is used as a fail-safe to prevent the crawler from running indefinitely.
+        """
         return self._limit
 
     @property
     def parser_class(self) -> Type[parsers.Parser]:
+        """The parser factory object used by the crawler to parse HTML responses."""
         return self._parser_class
 
     @property
     def start_urls(self) -> Set[str]:
+        """The URLs that the crawler was started with."""
         return self._start_urls
 
 
