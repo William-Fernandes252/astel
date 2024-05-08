@@ -255,7 +255,8 @@ class TestContains(FilterTest):
         case_sensitive: bool,
         expected: bool,
     ):
-        assume((text not in getattr(sample_url, url_prop)) == expected)
+        url_prop_value: str = getattr(sample_url, url_prop)
+        assume((text.lower() not in url_prop_value.lower()) == expected)
         f = ~self.filter_class(url_prop, text, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
