@@ -26,7 +26,7 @@ python = ">=3.8.18,<4.0"
 click = "8.0.1"
 setuptools = "~69.1"
 mypy = { version = "^0.900", optional = true }
-pytest = { version = "^6.2.4", optional = true }
+pytest = { version = ">=8.2.0,<8.3.0", optional = true }
 pytest-cov = { version = "^2.12.0", optional = true }
 tox = { version = "^3.20.1", optional = true }
 virtualenv = { version = "^20.2.2", optional = true }
@@ -48,15 +48,22 @@ pytest-xdist = { version = "^3.3.1", optional = true }
 pytest-sugar = { version = "^1.0.0", optional = true }
 ruff = { version = "^0.4.2", optional = true }
 eventemitter = "^0.2.0"
+pytest-camel-collect = { version = "^1.0.2", optional = true }
+pytest-asyncio = { version = "^0.23.6", optional = true }
+pytest-mock = { version = "^3.14.0", optional = true }
+pytest-watcher = { version = "^0.4.2", optional = true }
+freezegun = { version = "^1.5.0", optional = true }
 
 [tool.poetry.extras]
 test = [
+    "freezegun",
     "pytest",
-    "black",
-    "isort",
     "pytest-sugar",
     "mypy",
+    "pytest-camel-collect",
+    "pytest-asyncio",
     "pytest-cov",
+    "pytest-watcher",
     "hypothesis",
     "pytest-xdist",
 ]
@@ -181,6 +188,7 @@ ignore = [
     "UP035",
     "UP006",
     "UP007",
+    "UP017",
 ]
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -222,7 +230,24 @@ warn_no_return = true
 [tool.pytest.ini_options]
 python_files = ["tests.py", "test_*.py"]
 python_functions = ["test_*", "it_*", "its_*"]
+python_classes = [
+    "Test-*",
+    "Describe-*",
+    "Context-*",
+    "With-*",
+    "Without-*",
+    "For-*",
+    "When-*",
+    "If-*",
+    "Case-*",
+]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+
+
+[tool.pytest-watcher]
+now = true
+runner = "pytest"
 
 
 [build-system]
