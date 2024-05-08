@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import time
 from abc import ABC, abstractmethod
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional, TypedDict, cast
 
 import tldextract
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class RateLimiterConfig(TypedDict):
+class RateLimiterConfig(TypedDict, total=False):
     """Rate limiting configuration.
 
     Attributes:
@@ -86,12 +86,10 @@ class StaticRateLimiter(RateLimiter):
         self,
         config: RateLimiterConfig,
     ) -> None:
-        if config["crawl_delay"] is not None:
-            new_request_delay = float(config["crawl_delay"])
-        elif config["request_rate"] is not None:
-            new_request_delay = (
-                config["request_rate"].seconds / config["request_rate"].requests
-            )
+        if craw_delay := config.get("crawl_delay", None):
+            new_request_delay = float(craw_delay)
+        elif request_rate := config.get("request_rate"):
+            new_request_delay = request_rate.seconds / request_rate.requests
 
         if new_request_delay < 0:
             msg = "The new request delay must be greater "
@@ -138,16 +136,19 @@ class TokenBucketRateLimiter(RateLimiter):
 
         self._tokens_per_second = tokens_per_second
         self._tokens = 0.0
-        self._last_refresh_time = time.time()
+        self._last_refresh_time = self.utcnow()
+
+    @staticmethod
+    def utcnow() -> datetime:
+        return datetime.now(timezone.utc)
 
     def _refresh_tokens(self) -> None:
+        """Refreshes the tokens in the bucket based on the time elapsed since
+        the last refresh
         """
-        Refreshes the tokens in the bucket based on the time elapsed since the
-        last refresh
-        """
-        current_time = time.time()
+        current_time = self.utcnow()
         time_elapsed = current_time - self._last_refresh_time
-        new_tokens = time_elapsed * self._tokens_per_second
+        new_tokens = time_elapsed.seconds * self._tokens_per_second
         self._tokens = float(min(self._tokens + new_tokens, self._tokens_per_second))
         self._last_refresh_time = current_time
 
@@ -173,6 +174,7 @@ class TokenBucketRateLimiter(RateLimiter):
 
     @property
     def tokens(self) -> float:
+        self._refresh_tokens()
         return self._tokens
 
     @property
@@ -180,7 +182,7 @@ class TokenBucketRateLimiter(RateLimiter):
         return self._tokens_per_second
 
     @property
-    def last_refresh_time(self) -> float:
+    def last_refresh_time(self) -> datetime:
         return self._last_refresh_time
 
     def configure(
