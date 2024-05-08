@@ -3,6 +3,7 @@ from typing import Any, Dict, Type
 
 from hypothesis import provisional, strategies
 
+from naja import parsers
 from naja.filters import (
     Filter,
     In,
@@ -11,8 +12,6 @@ from naja.filters import (
     UrlProperty,
     url_valid_properties,
 )
-from naja.parsers import UrlParserMixin
-from naja.protocols import Url
 
 
 @strategies.composite
@@ -26,13 +25,13 @@ def url_properties(draw: strategies.DrawFn) -> UrlProperty:
 
 
 @strategies.composite
-def urls(draw: strategies.DrawFn) -> Url:
+def urls(draw: strategies.DrawFn) -> parsers.Url:
     """Strategy to generate a url object.
 
     Returns:
         Url: A url object.
     """
-    return draw(strategies.builds(UrlParserMixin.parse_url, provisional.urls()))
+    return draw(strategies.builds(parsers.parse_url, provisional.urls()))
 
 
 @strategies.composite
