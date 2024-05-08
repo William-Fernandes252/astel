@@ -20,7 +20,7 @@ from naja.filters import (
 from tests.strategies import filter_kwargs, filters, url_properties, urls
 
 if TYPE_CHECKING:
-    from naja.protocols import Url
+    from naja.parsers import Url
 
 
 class FilterTest(ABC):
