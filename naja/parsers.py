@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from functools import cached_property
 from html.parser import HTMLParser
@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Protocol, Set
 from urllib import parse
 from xml.etree import ElementTree
+
+from typing_extensions import override
 
 
 class Url(Protocol):
@@ -40,7 +42,7 @@ class Url(Protocol):
     def filetype(self) -> str: ...
 
 
-class Parser(ABC):
+class Parser(Protocol):
     """Parses the content of a file (webpages, or sitemaps, for example) to extract
     the links of interest (which are stored in the `found_links`
     attribute as instances of `Url`).
@@ -50,14 +52,8 @@ class Parser(ABC):
         Defaults to `None`.
     """
 
-    _found_links: Set[Url]
-    _base: str | None
+    def __init__(self, base: str | None = None) -> None: ...
 
-    def __init__(self, base: str | None = None) -> None:
-        self._base = base
-        self._found_links = set()
-
-    @abstractmethod
     def feed(self, text: str) -> None:
         """Process the content of a website and update the `found_links` attribute
 
@@ -73,16 +69,12 @@ class Parser(ABC):
             base (Union[str, None], optional): The base URL to use to resolve relative
             URLs. Defaults to `None`.
         """
-        self._base = base
-        self._found_links.clear()
 
     @property
-    def base(self) -> str | None:
-        return self._base
+    def base(self) -> str | None: ...
 
     @property
-    def found_links(self) -> Set[Url]:
-        return self._found_links
+    def found_links(self) -> Set[Url]: ...
 
 
 @dataclass(frozen=True)
@@ -134,7 +126,26 @@ def parse_url(url: str, base: str | None = None) -> Url:
     )
 
 
-class HTMLAnchorsParser(HTMLParser, Parser):
+class InitParserMixin:
+    """Helper mixin to initialize the parser with a base URL."""
+
+    def __init__(self, base: str | None = None) -> None:
+        self.base = base
+        self.found_links: Set[Url] = set()
+        super().__init__()
+
+    def reset(self, base: str | None = None) -> None:
+        if base is not None:
+            self.base = base
+        self.found_links.clear()
+        getattr(super(), "reset", lambda: ...)()
+
+
+class BaseParser(InitParserMixin, ABC):
+    """Base class to be used for implementing new parser classes."""
+
+
+class HTMLAnchorsParser(InitParserMixin, HTMLParser):
     """A parser that extracts the urls from a webpage and filter them out with the
     given filterer.
 
@@ -143,6 +154,7 @@ class HTMLAnchorsParser(HTMLParser, Parser):
         url_filter (Filterer): The filterer to use to filter the URLs
     """
 
+    @override
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag != "a":
             return
@@ -151,16 +163,8 @@ class HTMLAnchorsParser(HTMLParser, Parser):
             if attr == "href" and isinstance(value, str):
                 self.found_links.add(parse_url(value, self.base))
 
-    def feed(self, text: str) -> None:
-        super().feed(text)
 
-    def reset(self, base: str | None = None) -> None:
-        super().reset()
-        self._base = base
-        self._found_links.clear()
-
-
-class SiteMapParser(Parser):
+class SiteMapParser(InitParserMixin):
     """Parses a sitemap file to extract the links of interest.
 
     Args:
