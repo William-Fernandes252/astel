@@ -55,25 +55,25 @@ class Crawler:
     _filters: List[filters.CallableFilter]
     _event_emitter: EventEmitter
     _workers: List[asyncio.Task]
+    _options: CrawlerOptions
 
     def __init__(
         self, urls: Iterable[str], options: CrawlerOptions | None = None
     ) -> None:
-        options = merge_with_default_options(options)
-
+        self._options = merge_with_default_options(options)
         self._todo: asyncio.Queue[asyncio.Task] = asyncio.Queue()
-        self._client = options["client"]
+        self._client = self._options["client"]
         self._start_urls = set(urls)
         self._urls_seen: set[parsers.Url] = set()
         self._done: set[str] = set()
-        self._parser_class = options["parser_class"]
-        self._agent = agent.UserAgent(options["user_agent"])
-        self._rate_limiter = options["rate_limiter"]
-        self._num_workers = options["workers"]
-        self._limit = options["limit"]
+        self._parser_class = self._options["parser_class"]
+        self._agent = agent.UserAgent(self._options["user_agent"])
+        self._rate_limiter = self._options["rate_limiter"]
+        self._num_workers = self._options["workers"]
+        self._limit = self._options["limit"]
         self._total_pages = 0
         self._filters: List[filters.Filter] = []
-        self._event_emitter = options["event_emitter"]
+        self._event_emitter = self._options["event_emitter"]
 
     async def run(self) -> None:
         """Run the crawler."""
@@ -104,7 +104,7 @@ class Crawler:
 
         if self._agent.can_access(url.domain, url.raw):
             response = await self._send_request(url)
-            self._event_emitter.emit(events.Event.RESPONSE, response)
+            self._emit_event(events.Event.RESPONSE, response)
 
             await self._on_found_links(
                 await self._parse_links(
@@ -114,13 +114,13 @@ class Crawler:
             )
 
         self._done.add(url.raw)
-        self._event_emitter.emit(events.Event.DONE, url)
+        self._emit_event(events.Event.DONE, url)
 
     async def _send_request(self, url: parsers.Url) -> httpx.Response:
         request = httpx.Request(
             "GET", url.raw, headers={"User-Agent": self._agent.name}
         )
-        self._event_emitter.emit(events.Event.REQUEST, request)
+        self._emit_event(events.Event.REQUEST, request)
         return await self._client.send(request, follow_redirects=True)
 
     async def _parse_links(self, base: str, text: str) -> set[parsers.Url]:
@@ -303,3 +303,20 @@ class Crawler:
     def start_urls(self) -> Set[str]:
         """The URLs that the crawler was started with."""
         return self._start_urls
+
+    @property
+    def options(self) -> CrawlerOptions:
+        """The options used by the crawler."""
+        return self._options
+
+    @options.setter
+    def options(self, options: CrawlerOptions) -> None:
+        """Set the options used by the crawler."""
+        self._options = merge_with_default_options(options)
+        self._client = self._options["client"]
+        self._agent = agent.UserAgent(self._options["user_agent"])
+        self._rate_limiter = self._options["rate_limiter"]
+        self._num_workers = self._options["workers"]
+        self._limit = self._options["limit"]
+        self._parser_class = self._options["parser_class"]
+        self._event_emitter = self._options["event_emitter"]
