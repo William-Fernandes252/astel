@@ -4,7 +4,7 @@ import asyncio
 import asyncio.constants
 from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, Set, Type
 
-from eventemitter import EventEmitter
+import httpx
 from typing_extensions import Self
 
 from naja import agent, events, filters, limiters
@@ -13,7 +13,7 @@ from naja.options import CrawlerOptions, merge_with_default_options
 from . import parsers
 
 if TYPE_CHECKING:
-    import httpx
+    from eventemitter import EventEmitter
 
 FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
@@ -98,24 +98,27 @@ class Crawler:
         await task
         self._todo.task_done()
 
-    async def _crawl(self, url: str) -> None:
+    async def _crawl(self, url: parsers.Url) -> None:
         await self._rate_limiter.limit(url)
 
-        response = await self._send_request(url)
-        self._event_emitter.emit(events.Event.RESPONSE, response)
+        if self._agent.can_access(url.domain, url.raw):
+            response = await self._send_request(url)
+            self._event_emitter.emit(events.Event.RESPONSE, response)
 
-        await self._on_found_links(
-            await self._parse_links(
-                base=str(response.url),
-                text=response.text,
+            await self._on_found_links(
+                await self._parse_links(
+                    base=str(response.url),
+                    text=response.text,
+                )
             )
+
+        self._done.add(url.raw)
+        self._event_emitter.emit(events.Event.DONE, url)
+
+    async def _send_request(self, url: parsers.Url) -> httpx.Response:
+        request = httpx.Request(
+            "GET", url.raw, headers={"User-Agent": self._agent.name}
         )
-
-        self._done.add(url)
-        self._event_emitter.emit(events.Event.DONE, parsers.parse_url(url))
-
-    async def _send_request(self, url: str) -> httpx.Response:
-        request = httpx.Request("GET", url, headers={"User-Agent": self._agent.name})
         self._event_emitter.emit(events.Event.REQUEST, request)
         return await self._client.send(request, follow_redirects=True)
 
@@ -207,10 +210,10 @@ class Crawler:
     async def _on_found_links(self, urls: set[parsers.Url]) -> None:
         for url in urls:
             self._event_emitter.emit(events.Event.URL_FOUND, url)
-        for result in await self._acknowledge_domains(urls):
-            await self._put_todo(result.raw)
+        for url in await self._acknowledge_domains(urls):
+            await self._put_todo(url)
 
-    async def _put_todo(self, url: str) -> None:
+    async def _put_todo(self, url: parsers.Url) -> None:
         if self._total_pages > self._limit:
             return
         self._total_pages += 1
@@ -278,15 +281,3 @@ class Crawler:
     def start_urls(self) -> Set[str]:
         """The URLs that the crawler was started with."""
         return self._start_urls
-
-
-# TODO:
-# - add logging
-# - add retry
-# - respect robots.txt *done*
-# - find links in sitemap.xml *done*
-# - provide a user agent *done*
-# - normalize urls (e.g. https://mcoding.io/ -> https://mcoding.io) *done*
-# - skip filetypes or filetypes only
-# - max depth of links
-# - store connections as graph
