@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import asyncio.constants
-from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, Set, Type
+from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, List, Set, Type
 
 import httpx
 from typing_extensions import Self
@@ -52,7 +52,7 @@ class Crawler:
     _num_workers: int
     _limit: int
     _total_pages: int
-    _filters: list[filters.Filter]
+    _filters: List[filters.CallableFilter]
     _event_emitter: EventEmitter
 
     def __init__(
@@ -71,7 +71,7 @@ class Crawler:
         self._num_workers = options["workers"]
         self._limit = options["limit"]
         self._total_pages = 0
-        self._filters: list[filters.Filter] = []
+        self._filters: List[filters.Filter] = []
         self._event_emitter = options["event_emitter"]
 
     async def run(self) -> None:
@@ -128,7 +128,7 @@ class Crawler:
         return {link for link in parser.found_links if self._apply_filters(link)}
 
     def _apply_filters(self, url: parsers.Url) -> bool:
-        return all(f.filter(url) for f in self._filters)
+        return all(f(url) for f in self._filters)
 
     async def _acknowledge_domains(
         self, parsed_urls: set[parsers.Url]
@@ -173,7 +173,7 @@ class Crawler:
         parser.feed(response.text)
         return parser.found_links
 
-    def filter(self, *args: filters.Filter, **kwargs) -> Self:
+    def filter(self, *args: filters.CallableFilter, **kwargs) -> Self:
         """Add URL filters to the crawler.
 
         Filters can be used to determine which URLs should be ignored by the Crawler.

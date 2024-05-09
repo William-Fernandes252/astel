@@ -7,10 +7,10 @@ import operator
 import re
 from abc import ABC, abstractmethod
 from typing import (
-    Callable,
     Final,
     Generic,
     Literal,
+    Protocol,
     Sequence,
     Type,
     TypeVar,
@@ -38,11 +38,16 @@ UrlProperty = Literal[
     "domain", "path", "params", "query", "fragment", "scheme", "filetype"
 ]
 
-CallableFilter = Callable[[Url], bool]
 
 url_valid_properties: Final[list[str]] = [
     p for p in dir(Url) if isinstance(getattr(Url, p), property)
 ]
+
+
+class CallableFilter(Protocol):
+    """Callable filter interface."""
+
+    def __call__(self, url: Url) -> bool: ...
 
 
 class Filter(ABC, Generic[T]):
