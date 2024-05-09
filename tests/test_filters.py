@@ -161,7 +161,7 @@ class TestStartsWith(FilterTest):
         expected: bool,
     ):
         url_prop_value: str = getattr(sample_url, url_prop)
-        assume(url_prop_value.startswith(prefix) != expected)
+        assume(url_prop_value.lower().startswith(prefix.lower()) != expected)
         f = ~self.filter_class(url_prop, prefix, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
@@ -188,7 +188,7 @@ class TestEndsWith(FilterTest):
         expected: bool,
     ):
         url_prop_value: str = getattr(sample_url, url_prop)
-        assume(url_prop_value.endswith(suffix) == expected)
+        assume(url_prop_value.lower().endswith(suffix.lower()) == expected)
         f = self.filter_class(url_prop, suffix, case_sensitive=case_sensitive)
         assert f.filter(sample_url) == expected
 
