@@ -54,6 +54,7 @@ class Crawler:
     _total_pages: int
     _filters: List[filters.CallableFilter]
     _event_emitter: EventEmitter
+    _workers: List[asyncio.Task]
 
     def __init__(
         self, urls: Iterable[str], options: CrawlerOptions | None = None
@@ -78,12 +79,12 @@ class Crawler:
         """Run the crawler."""
         await self._on_found_links({parsers.parse_url(url) for url in self._start_urls})
 
-        workers = [
+        self._workers = [
             asyncio.create_task(self._worker()) for _ in range(self._num_workers)
         ]
         await self._todo.join()
 
-        for worker in workers:
+        for worker in self._workers:
             worker.cancel()
 
     async def _worker(self) -> None:
@@ -209,7 +210,7 @@ class Crawler:
 
     async def _on_found_links(self, urls: set[parsers.Url]) -> None:
         for url in urls:
-            self._event_emitter.emit(events.Event.URL_FOUND, url)
+            self._emit_event(events.Event.URL_FOUND, url, crawler=self)
         for url in await self._acknowledge_domains(urls):
             await self._put_todo(url)
 
@@ -238,6 +239,27 @@ class Crawler:
             handler (Callable): The handler to add to the event.
         """
         self._event_emitter.on(event, handler)
+
+    def _emit_event(self, *args, **kwargs) -> None:
+        self._event_emitter.emit(*args, **kwargs, crawler=self)
+
+    def stop(self, *, reset: bool = False) -> None:
+        """Stop the crawler current execution.
+
+        Args:
+            reset (bool, optional: Optionally, reset the crawler on the same call.
+            Defaults to False.
+        """
+        for worker in self._workers:
+            worker.cancel()
+        if reset:
+            self.reset()
+
+    def reset(self) -> None:
+        """Reset the crawler."""
+        self._done.clear()
+        self._urls_seen.clear()
+        self._total_pages = 0
 
     @property
     def total_pages(self) -> int:
