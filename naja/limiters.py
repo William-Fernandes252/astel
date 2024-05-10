@@ -86,18 +86,19 @@ class StaticRateLimiter(RateLimiter):
         self,
         config: RateLimiterConfig,
     ) -> None:
+        new_request_delay: Optional[float] = None
         if craw_delay := config.get("crawl_delay", None):
             new_request_delay = float(craw_delay)
-        elif request_rate := config.get("request_rate"):
+        elif request_rate := config.get("request_rate", None):
             new_request_delay = request_rate.seconds / request_rate.requests
 
-        if new_request_delay < 0:
+        if new_request_delay and new_request_delay < 0:
             msg = "The new request delay must be greater "
             "than 0 (got {new_request_delay})."
             raise errors.InvalidConfigurationError(msg)
 
         # Use the greater of the two in order to respect all the domains
-        if new_request_delay > self.time:
+        if new_request_delay and new_request_delay > self.time:
             self.time = new_request_delay
 
 
@@ -242,21 +243,17 @@ class PerDomainRateLimiter(RateLimiter):
 
         await limiter.limit()
 
-    def add_domain(self, url: str, limiter: RateLimiter | None = None) -> None:
+    def add_domain(self, domain: str, limiter: RateLimiter | None = None) -> None:
         """Adds a new domain to the limited domains with an optional rate limiter.
 
         Args:
-            url (str): A string representing the URL to extract the domain from.
+            domain (str): A string representing the domain name to add.
             limiter (protocols.RateLimiter, optional): An optional `RateLimiter`
             instance used to limit the rate of requests to the domain. Defaults to None.
 
         Raises:
             errors.InvalidUrlError: If the given URL does not contain a valid domain.
         """
-        domain = self.extract_domain(url)
-        if domain == "":
-            raise errors.InvalidUrlError(url)
-
         if limiter is None and self.default_limiter is None:
             msg = "No limiter was provided and no default limiter was set."
             raise errors.InvalidConfigurationError(msg)
