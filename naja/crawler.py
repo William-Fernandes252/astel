@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, List, Set, Type
 import httpx
 from typing_extensions import Self
 
-from naja import agent, events, filters, limiters
+from naja import agent, events, filters, limiters, parsers
 from naja.options import CrawlerOptions, merge_with_default_options
-
-from . import parsers
 
 if TYPE_CHECKING:
     from eventemitter import EventEmitter
@@ -100,7 +98,7 @@ class Crawler:
         self._todo.task_done()
 
     async def _crawl(self, url: parsers.Url) -> None:
-        await self._rate_limiter.limit(url)
+        await self._rate_limiter.limit(url.raw)
 
         if self._agent.can_access(url.domain, url.raw):
             response = await self._send_request(url)
