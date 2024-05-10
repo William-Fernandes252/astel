@@ -131,9 +131,22 @@ class Crawler:
     ) -> set[parsers.Url]:
         new = parsed_urls - self._urls_seen
         for result in new:
-            self._agent.respect(
-                result.domain, f"{result.scheme}://{result.domain}/robots.txt"
+            robots_txt = (
+                (
+                    await self._client.get(
+                        f"{result.scheme}://{result.domain}/robots.txt",
+                        timeout=5,
+                        follow_redirects=False,
+                        headers={
+                            "User-Agent": self._agent.name,
+                            "Accept": "text/plain",
+                        },
+                    )
+                )
+                .raise_for_status()
+                .text
             )
+            self._agent.respect(result.domain, robots_txt)
 
             tasks = [
                 asyncio.create_task(
@@ -302,6 +315,11 @@ class Crawler:
     def start_urls(self) -> Set[str]:
         """The URLs that the crawler was started with."""
         return self._start_urls
+
+    @property
+    def agent(self) -> str:
+        """The user agent used by the crawler."""
+        return self._agent.name
 
     @property
     def options(self) -> CrawlerOptions:

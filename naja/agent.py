@@ -18,7 +18,7 @@ class UserAgent:
         self.name = name
         self._acknowledged_domains: dict[str, RobotFileParser] = {}
 
-    def respect(self, domain: str, robots_url: str) -> None:
+    def respect(self, domain: str, robots_txt: str) -> None:
         """Process the rules in the robots.txt file in the URL and associates
         them to the given domain, if the domain has not already been acknowledged.
 
@@ -29,7 +29,9 @@ class UserAgent:
         """
         if domain in self._acknowledged_domains:
             return
-        self._acknowledged_domains[domain] = RobotFileParser(robots_url)
+        parser = RobotFileParser()
+        parser.parse(robots_txt.splitlines())
+        self._acknowledged_domains[domain] = parser
 
     def can_access(self, domain: str, url: str) -> bool:
         """Determines whether the given URL can be accessed by the user agent for the
