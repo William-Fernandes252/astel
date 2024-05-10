@@ -194,14 +194,16 @@ class Crawler:
             >>> crawler.filter(domain__in=["example.com"])
         """
         self._filters.extend(
-            [*args],
-            *[
-                f
-                for f in (
-                    filters.create_from_kwarg(key, value)
-                    for key, value in kwargs.items()
-                )
-                if f is not None
+            [
+                *args,
+                *[
+                    f
+                    for f in (
+                        filters.create_from_kwarg(key, value)
+                        for key, value in kwargs.items()
+                    )
+                    if f is not None
+                ],
             ],
         )
         return self
