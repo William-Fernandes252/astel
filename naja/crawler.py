@@ -144,7 +144,8 @@ class Crawler:
                 )
                 for site_map_path in self._agent.get_site_maps(result.domain) or []
             ]
-            await asyncio.wait(tasks)
+            if len(tasks) > 0:
+                await asyncio.wait(tasks)
 
             self._rate_limiter.configure(
                 {
