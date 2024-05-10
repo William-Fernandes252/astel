@@ -84,11 +84,8 @@ class DescribePerDomainRateLimiter:
             return limiters.PerDomainRateLimiter()
 
         @pytest.fixture()
-        def limiter_with_default(
-            self, limiter: limiters.PerDomainRateLimiter, mocker: MockerFixture
-        ):
-            limiter.default_limiter = mocker.MagicMock(limiters.RateLimiter)
-            return limiter
+        def limiter_with_default(self, mocker: MockerFixture):
+            return limiters.PerDomainRateLimiter(mocker.MagicMock(limiters.RateLimiter))
 
         @given(url=provisional.urls())
         async def it_raises_a_value_error_if_no_domain_is_given(
