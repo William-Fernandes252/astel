@@ -210,7 +210,7 @@ class Crawler:
 
     async def _on_found_links(self, urls: set[parsers.Url]) -> None:
         for url in urls:
-            self._emit_event(events.Event.URL_FOUND, url, crawler=self)
+            self._emit_event(events.Event.URL_FOUND, url)
         for url in await self._acknowledge_domains(urls):
             await self._put_todo(url)
 
