@@ -91,8 +91,12 @@ class Crawler:
 
     async def _process_one(self) -> None:
         task = await self._todo.get()
-        await task
-        self._todo.task_done()
+        try:
+            await task
+        except httpx.HTTPError as e:
+            self._emit_event(events.Event.ERROR, e)
+        finally:
+            self._todo.task_done()
 
     async def _crawl(self, url: parsers.Url) -> None:
         await self._rate_limiter.limit(url.raw)
@@ -100,7 +104,6 @@ class Crawler:
         if self._agent.can_access(url.domain, url.raw):
             response = await self._send_request(url)
             self._emit_event(events.Event.RESPONSE, response)
-
             await self._on_found_links(
                 await self._parse_links(
                     base=str(response.url),
@@ -116,7 +119,9 @@ class Crawler:
             "GET", url.raw, headers={"User-Agent": self._agent.name}
         )
         self._emit_event(events.Event.REQUEST, request)
-        return await self._client.send(request, follow_redirects=True)
+        return (
+            await self._client.send(request, follow_redirects=True)
+        ).raise_for_status()
 
     async def _parse_links(self, base: str, text: str) -> set[parsers.Url]:
         parser = self._parser_class(base=base)
@@ -155,7 +160,13 @@ class Crawler:
                 for site_map_path in self._agent.get_site_maps(result.domain) or []
             ]
             if len(tasks) > 0:
-                await asyncio.wait(tasks)
+                done, _ = await asyncio.wait(tasks)
+                for future in done:
+                    task_result = future.result()
+                    if isinstance(task_result, set):
+                        new.update(future.result())
+                    else:
+                        raise task_result
 
             self._rate_limiter.configure(
                 {
@@ -179,7 +190,7 @@ class Crawler:
             Set[parsers.Url]: The URLs found in the sitemap.xml file.
         """
         parser = parsers.SiteMapParser(site_map_path)
-        response = await self._client.get(site_map_path)
+        response = (await self._client.get(site_map_path)).raise_for_status()
         parser.feed(response.text)
         return parser.found_links
 
