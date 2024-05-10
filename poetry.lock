@@ -1929,7 +1929,7 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [extras]
 dev = ["bump2version", "pip", "pre-commit", "ruff", "toml", "tox", "twine", "virtualenv"]
 doc = ["mkdocs", "mkdocs-autorefs", "mkdocs-include-markdown-plugin", "mkdocs-material", "mkdocstrings"]
-test = ["freezegun", "hypothesis", "mypy", "pytest", "pytest-asyncio", "pytest-camel-collect", "pytest-cov", "pytest-mock", "pytest-sugar", "pytest-watcher", "pytest-xdist"]
+test = ["freezegun", "hypothesis", "mypy", "pytest", "pytest-asyncio", "pytest-camel-collect", "pytest-cov", "pytest-httpx", "pytest-mock", "pytest-sugar", "pytest-watcher", "pytest-xdist"]
 
 [metadata]
 lock-version = "2.0"
