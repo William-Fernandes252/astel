@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import asyncio.constants
-from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, List, Set, Type
+from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type
 
 import httpx
 from typing_extensions import Self
 
 from naja import agent, events, filters, limiters, parsers
 from naja.options import CrawlerOptions, merge_with_default_options
-
-if TYPE_CHECKING:
-    from eventemitter import EventEmitter
 
 FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
@@ -51,27 +48,27 @@ class Crawler:
     _limit: int
     _total_pages: int
     _filters: List[filters.CallableFilter]
-    _event_emitter: EventEmitter
+    _event_emitter: events.EventEmitter
     _workers: List[asyncio.Task]
     _options: CrawlerOptions
 
     def __init__(
-        self, urls: Iterable[str], options: CrawlerOptions | None = None
+        self, urls: Iterable[str], options: Optional[CrawlerOptions] = None
     ) -> None:
-        self._options = merge_with_default_options(options)
         self._todo: asyncio.Queue[asyncio.Task] = asyncio.Queue()
-        self._client = self._options["client"]
         self._start_urls = set(urls)
         self._urls_seen: set[parsers.Url] = set()
         self._done: set[str] = set()
+        self._filters: List[filters.Filter] = []
+        self._options = merge_with_default_options(options)
+        self._client = self._options["client"]
         self._parser_class = self._options["parser_class"]
         self._agent = agent.UserAgent(self._options["user_agent"])
         self._rate_limiter = self._options["rate_limiter"]
         self._num_workers = self._options["workers"]
         self._limit = self._options["limit"]
         self._total_pages = 0
-        self._filters: List[filters.Filter] = []
-        self._event_emitter = self._options["event_emitter"]
+        self._event_emitter = self._options["event_limiter_factory"]()
 
     async def run(self) -> None:
         """Run the crawler."""
@@ -221,7 +218,7 @@ class Crawler:
         self._total_pages += 1
         await self._todo.put(asyncio.create_task(self._crawl(url)))
 
-    def on(self, event: events.Event, handler: events.Handler) -> None:
+    def on(self, event: events.Event, handler: events.Handler) -> Self:
         """Add an event handler to the crawler.
 
         An event is emitted when
@@ -240,9 +237,10 @@ class Crawler:
             handler (Callable): The handler to add to the event.
         """
         self._event_emitter.on(event, handler)
+        return self
 
-    def _emit_event(self, *args, **kwargs) -> None:
-        self._event_emitter.emit(*args, **kwargs, crawler=self)
+    def _emit_event(self, event: events.Event, *data) -> None:
+        self._event_emitter.emit(event, *data, crawler=self)
 
     def stop(self, *, reset: bool = False) -> None:
         """Stop the crawler current execution.
@@ -311,7 +309,7 @@ class Crawler:
         return self._options
 
     @options.setter
-    def options(self, options: CrawlerOptions) -> None:
+    def options(self, options: Optional[CrawlerOptions] = None) -> None:
         """Set the options used by the crawler."""
         self._options = merge_with_default_options(options)
         self._client = self._options["client"]
@@ -320,4 +318,4 @@ class Crawler:
         self._num_workers = self._options["workers"]
         self._limit = self._options["limit"]
         self._parser_class = self._options["parser_class"]
-        self._event_emitter = self._options["event_emitter"]
+        self._event_emitter = self._options["event_limiter_factory"]()

@@ -11,6 +11,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Protocol, Union
 
 import httpx
+from typing_extensions import Self
 
 from naja import errors, parsers
 
@@ -61,3 +62,16 @@ class UrlFoundHandler(Protocol):
 Handler = Union[
     ResponseHandler, RequestHandler, ErrorHandler, DoneHandler, UrlFoundHandler
 ]
+
+
+class EventEmitter(Protocol):
+    """Protocol for an event emitter."""
+
+    def emit(
+        self,
+        event: Event,
+        *data: Union[httpx.Request, httpx.Response, errors.Error, parsers.Url],
+        crawler: "Crawler",
+    ) -> Self: ...
+
+    def on(self, event: Event, handler: Handler) -> Self: ...
