@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from typing import List
-from urllib.robotparser import RequestRate, RobotFileParser
+from urllib.robotparser import (  # type: ignore[attr-defined]
+    RequestRate,
+    RobotFileParser,
+)
 
 __all__ = ["UserAgent", "RequestRate", "RobotFileParser"]
 

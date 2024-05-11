@@ -11,7 +11,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Protocol, Union
 
 import httpx
-from typing_extensions import Self
+from typing_extensions import Self  # type: ignore[attr-defined]
 
 from naja import errors, parsers
 

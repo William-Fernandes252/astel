@@ -179,7 +179,7 @@ class DescribeCrawler:
             )
             _add_responses(httpx_mock, initial_urls)
             limiter_mock = mocker.MagicMock(limiters.RateLimiter)
-            crawler.options = {**crawler.options, "rate_limiter": limiter_mock}
+            crawler.options = {**crawler.options, "rate_limiter": limiter_mock}  # type: ignore  # noqa: PGH003
             await crawler.run()
             limit = cast(MockType, crawler.options["rate_limiter"].limit)
             assert initial_urls[0] in limit.mock_calls[0].args

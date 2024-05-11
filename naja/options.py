@@ -55,4 +55,4 @@ def merge_with_default_options(options: CrawlerOptions | None = None) -> Crawler
     Returns:
         CrawlerOptions: The merged options.
     """
-    return {**DEFAULT_OPTIONS, **(options or {})}
+    return {**DEFAULT_OPTIONS, **(options or {})}  # type: ignore   # noqa: PGH003

@@ -10,7 +10,7 @@ import tldextract
 from . import errors
 
 if TYPE_CHECKING:
-    from urllib.robotparser import RequestRate
+    from urllib.robotparser import RequestRate  # type: ignore[attr-defined]
 
 __all__ = [
     "RateLimiter",
@@ -78,7 +78,7 @@ class StaticRateLimiter(RateLimiter):
     def __init__(self, time_in_seconds: float) -> None:
         self.time = time_in_seconds
 
-    async def limit(self) -> None:
+    async def limit(self) -> None:  # type: ignore[override]
         """Limit by wainting for the specified amount of time"""
         await asyncio.sleep(self.time)
 
@@ -108,7 +108,7 @@ class NoLimitRateLimiter(RateLimiter):
     lot of requests per second can result in throttling or even bans.
     """
 
-    async def limit(self) -> None:
+    async def limit(self) -> None:  # type: ignore[override]
         """
         Asynchronously sleeps for 0 seconds.
         """
@@ -169,7 +169,7 @@ class TokenBucketRateLimiter(RateLimiter):
             return True
         return False
 
-    async def limit(self) -> None:
+    async def limit(self) -> None:  # type: ignore[override]
         while not self.consume(1):
             pass
 
@@ -225,7 +225,7 @@ class PerDomainRateLimiter(RateLimiter):
         self.default_limiter = default_limiter
         self._domain_to_limiter = {}
 
-    async def limit(self, url: str) -> None:
+    async def limit(self, url: str) -> None:  # type: ignore[override]
         """Limit the requests to the given URL by its domain.
 
         Args:

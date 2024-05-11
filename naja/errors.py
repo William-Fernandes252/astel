@@ -8,8 +8,8 @@ class Error(Exception):
 
     default_message: str | None = None
 
-    def __init__(self, message: str = "", *args, **kwargs) -> None:
-        super().__init__(message, *args, **kwargs)
+    def __init__(self, message: str = "") -> None:
+        super().__init__(message)
         self.message = message or self.default_message
 
     def __repr__(self) -> str:
@@ -21,8 +21,8 @@ class InvalidUrlError(Error):
     Raised when a URL is invalid
     """
 
-    def __init__(self, url: str, *args, **kwargs) -> None:
-        super().__init__(f'The URL "{url}" is invalid.', *args, **kwargs)
+    def __init__(self, url: str) -> None:
+        super().__init__(f'The URL "{url}" is invalid.')
         self.url = url
 
 

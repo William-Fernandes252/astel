@@ -9,7 +9,7 @@ from typing import Protocol, Set
 from urllib import parse
 from xml.etree import ElementTree
 
-from typing_extensions import override
+from typing_extensions import override  # type: ignore[attr-defined]
 
 
 class Url(Protocol):

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import asyncio.constants
-from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type
+from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type, cast
 
 import httpx
-from typing_extensions import Self
+from typing_extensions import Self  # type: ignore[attr-defined]
 
 from naja import agent, events, filters, limiters, parsers
 from naja.options import CrawlerOptions, merge_with_default_options
@@ -166,7 +166,7 @@ class Crawler:
                     if isinstance(task_result, set):
                         new.update(future.result())
                     else:
-                        raise task_result
+                        raise cast(BaseException, task_result)
 
             self._rate_limiter.configure(
                 {

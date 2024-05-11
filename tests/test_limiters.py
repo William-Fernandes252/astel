@@ -1,6 +1,6 @@
 import asyncio
 from typing import ClassVar, Union
-from urllib.robotparser import RequestRate
+from urllib.robotparser import RequestRate  # type: ignore[attr-defined]
 
 import pytest
 from freezegun import freeze_time
