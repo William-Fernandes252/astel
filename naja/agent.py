@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import List
 from urllib.robotparser import RequestRate, RobotFileParser
 
 __all__ = ["UserAgent", "RequestRate", "RobotFileParser"]
@@ -75,7 +76,9 @@ class UserAgent:
         """
         if domain not in self._acknowledged_domains:
             return None
-        return self._acknowledged_domains[domain].crawl_delay(self.name)
+
+        crawl_delay = self._acknowledged_domains[domain].crawl_delay(self.name)
+        return str(crawl_delay) if crawl_delay is not None else None
 
     def get_site_maps(self, domain: str) -> list[str] | None:
         """Returns the site maps associated with the given domain if the domain is
@@ -91,3 +94,8 @@ class UserAgent:
         if domain not in self._acknowledged_domains:
             return None
         return self._acknowledged_domains[domain].site_maps()
+
+    @property
+    def acknowledged_domains(self) -> List[str]:
+        """The domains that have been acknowledged by the user agent."""
+        return list(self._acknowledged_domains.keys())
