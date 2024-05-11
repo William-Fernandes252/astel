@@ -11,7 +11,7 @@ from naja.options import CrawlerOptions
 
 
 def cli_for(
-    crawler_factory: Callable[[List[str], CrawlerOptions], Crawler]
+    crawler_factory: Callable[[List[str], CrawlerOptions], Crawler],
 ) -> Callable[..., int]:
     """Return a CLI function for the given crawler factory.
 
