@@ -1,3 +1,8 @@
+"""Crawler module.
+
+This module defines the `Crawler` class that can be used to crawl websites asynchronously.
+"""  # noqa: E501
+
 from __future__ import annotations
 
 import asyncio
@@ -16,25 +21,12 @@ ParserFactory = Type[parsers.Parser]
 
 
 class Crawler:
-    """A simple asyncronous web crawler that uses httpx to navigate to websites
+    """An asynchronous web crawler that can be used to extract, process and follow links in webpages.
 
     Args:
-        client (httpx.AsyncClient): An instance of `httpx.AsyncClient` to use for
-        network requests.
-        urls (Iterable[str]): An iterable of URLs to start the crawling with.
-        workers (int, optional): The number of worker tasks to run in parallel.
-        Defaults to 10.
-        limit (int, optional): The maximum number of pages to crawl. Defaults to 25.
-        found_urls_handlers (Iterable[FoundUrlsHandler], optional): A list of
-        FoundUrlsHandler objects to use for processing
-        newly found URLs. Defaults to [].
-        parser_class (ParserFactory | None, optional): A parser factory object to use
-        for parsing HTML responses.
-        Defaults to `type(parsers.UrlParser)`. Defaults to None.
-        rate_limiter (limiters.RateLimiter | None, optional): A rate limiter to limit
-        the number of requests sent per second.
-        Defaults to `limiters.NoLimitRateLimiter`. Defaults to None.
-    """
+        urls (Iterable[str]): The URLs to start the crawler with.
+        options (CrawlerOptions, optional): The options to use for the crawler.
+    """  # noqa: E501
 
     _todo: asyncio.Queue[asyncio.Task]
     _client: httpx.AsyncClient
@@ -53,7 +45,7 @@ class Crawler:
     _options: CrawlerOptions
 
     def __init__(
-        self, urls: Iterable[str], options: Optional[CrawlerOptions] = None
+        self, urls: Iterable[str], options: CrawlerOptions | None = None
     ) -> None:
         self._todo: asyncio.Queue[asyncio.Task] = asyncio.Queue()
         self._start_urls = set(urls)
@@ -197,24 +189,23 @@ class Crawler:
     def filter(self, *args: filters.CallableFilter, **kwargs) -> Self:
         """Add URL filters to the crawler.
 
-        Filters can be used to determine which URLs should be ignored by the Crawler.
+        Filters can be used to determine which URLs should be ignored.
 
         Args:
-            *args (Filter): A list of Filter objects to add to the crawler.
-            **kwargs: A list of keyword arguments to create Filter objects from.
+            *args (Filter): A list of `Filter` objects to add to the crawler.
+            **kwargs (Any): A list of keyword arguments to create `Filter` objects from.
 
         Returns:
-            Crawler: The Crawler object with the added filters.
+            Crawler: The `Crawler` object with the added filters.
 
         Raises:
-            ValueError: If a filter could not be created from the given keyword
-            arguments.
+            ValueError: If a filter could not be created from the given keyword arguments.
 
         Examples:
             >>> crawler.filter(filters.StartsWith("scheme", "http"))
             >>> crawler.filter(filters.Matches("https://example.com"))
             >>> crawler.filter(domain__in=["example.com"])
-        """
+        """  # noqa: E501
         self._filters.extend(
             [
                 *args,
@@ -270,9 +261,8 @@ class Crawler:
         """Stop the crawler current execution.
 
         Args:
-            reset (bool, optional: Optionally, reset the crawler on the same call.
-            Defaults to False.
-        """
+            reset (bool, optional: Optionally, reset the crawler on the same call. Defaults to `False`.
+        """  # noqa: E501
         for worker in self._workers:
             worker.cancel()
         if reset:

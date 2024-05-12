@@ -1,3 +1,10 @@
+"""Filters for URLs.
+
+Some URLs in a webpage may not be relevant to your use cases.
+
+This module defines the filters that can be used to filter out URLs from the crawlers execution based on their properties.
+"""  # noqa: E501
+
 from __future__ import annotations
 
 import copy
@@ -54,18 +61,19 @@ class Filter(ABC, Generic[T]):
     """
     Base class for filters.
 
-    ### Example usage
+    Filters are used to determine if a URL should be processed or not. They can be combined using the bitwise operator `&`: `filter1` & `filter2` will return a new filter that will pass only if both `filter1` and `filter2` pass.
 
-    ```python
-    from naja.filterers.filters import In
+    New filters can be created by subclassing this class and implementing the `_apply` method.
 
-    domain_in_list = In("domain", ["example.com"])
-    html_or_php = In(lambda url: url.path.split(".")[-1], ["html", "php"])
+    Generic:
+        T: The type of the filter parameter.
 
-    my_filter = domain_in_list & html_or_php
-
-    ```
-    """
+    Examples:
+        >>> from naja.filterers.filters import In
+        >>> domain_in_list = In("domain", ["example.com"])
+        >>> html_or_php = In(lambda url: url.path.split(".")[-1], ["html", "php"])
+        >>> my_filter = domain_in_list & html_or_php
+    """  # noqa: E501
 
     url_prop: UrlProperty
     __inverted: bool
@@ -142,6 +150,14 @@ class Filter(ABC, Generic[T]):
 
 
 class In(Filter[Sequence[str]]):
+    """Filter URLs based on a group of values.
+
+    Examples:
+        >>> from naja.filterers.filters import In
+        >>> domain_in_list = In("domain", ["example.com"])
+        >>> domain_in_list.filter(ParsedUrl(domain="https://example.com", ...))  # True
+    """
+
     def __init__(self, url_prop: UrlProperty, group: Sequence[str], **kwargs) -> None:
         super().__init__(url_prop, **kwargs)
         self.set = set(group)
@@ -151,6 +167,14 @@ class In(Filter[Sequence[str]]):
 
 
 class Matches(Filter[Union[re.Pattern, str]]):
+    r"""Filter URLs based on a regular expression.
+
+    Examples:
+        >>> from naja.filterers.filters import Matches
+        >>> domain_matches = Matches("domain", r"example\..+")
+        >>> domain_matches.filter(ParsedUrl(domain="https://example.com", ...))  # True
+    """
+
     def __init__(
         self, url_prop: UrlProperty, regex: re.Pattern | str, **kwargs
     ) -> None:
@@ -161,7 +185,12 @@ class Matches(Filter[Union[re.Pattern, str]]):
         return re.match(self.regex, self._get_url_property(url)) is not None
 
 
-class TextFilter(Filter, ABC):
+class TextFilter(Filter[str], ABC):
+    """Base class for text filters.
+
+    Filters URLs based on a text value.
+    """
+
     def __init__(
         self, url_prop: UrlProperty, text: str, *, case_sensitive: bool = True, **kwargs
     ) -> None:
@@ -180,16 +209,40 @@ class TextFilter(Filter, ABC):
 
 
 class StartsWith(TextFilter):
+    """Filter URLs based on a text prefix.
+
+    Examples:
+        >>> from naja.filterers.filters import StartsWith
+        >>> domain_starts_with = StartsWith("domain", "example")
+        >>> domain_starts_with.filter(ParsedUrl(domain="https://example.com", ...))  # True
+    """  # noqa: E501
+
     def _apply(self, url: Url) -> bool:
         return self._get_url_property(url).startswith(self.text)
 
 
 class EndsWith(TextFilter):
+    """Filter URLs based on a text suffix.
+
+    Examples:
+        >>> from naja.filterers.filters import EndsWith
+        >>> domain_ends_with = EndsWith("domain", ".com")
+        >>> domain_ends_with.filter(ParsedUrl(domain="https://example.com", ...))  # True
+    """  # noqa: E501
+
     def _apply(self, url: Url) -> bool:
         return self._get_url_property(url).endswith(self.text)
 
 
 class Contains(TextFilter):
+    """Filter URLs based on a text substring.
+
+    Examples:
+        >>> from naja.filterers.filters import Contains
+        >>> domain_contains = Contains("domain", "example")
+        >>> domain_contains.filter(ParsedUrl(domain="https://example.com", ...))  # True
+    """
+
     def _apply(self, url: Url) -> bool:
         return self.text in self._get_url_property(url)
 

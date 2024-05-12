@@ -9,7 +9,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at https://github.com/William-Fernandes252/naja/issues.
+Report bugs at the [issues page](https://github.com/William-Fernandes252/naja/issues).
 
 If you are reporting a bug, please include:
 
@@ -35,7 +35,7 @@ articles, and such.
 
 ### Submit Feedback
 
-The best way to send feedback is to file an issue at https://github.com/William-Fernandes252/naja/issues.
+The best way to send feedback is to file an issue at the [issues feedback page](https://github.com/William-Fernandes252/naja/issues).
 
 If you are proposing a feature:
 
@@ -44,48 +44,48 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that contributions
   are welcome :)
 
-## Get Started!
+## Get Started
 
 Ready to contribute? Here's how to set up `naja` for local development.
 
 1. Fork the `naja` repo on GitHub.
-2. Clone your fork locally
+1. Clone your fork locally
 
-    ```
-    $ git clone git@github.com:your_name_here/naja.git
-    ```
-
-3. Ensure [poetry](https://python-poetry.org/docs/) is installed.
-4. Install dependencies and start your virtualenv:
-
-    ```
-    $ poetry install -E test -E doc -E dev
+    ```bash
+    git clone git@github.com:your_name_here/naja.git
     ```
 
-5. Create a branch for local development:
+1. Ensure [poetry](https://python-poetry.org/docs/) is installed.
+1. Install dependencies and start your virtualenv:
 
+    ```bash
+    poetry install -E test -E doc -E dev
     ```
-    $ git checkout -b name-of-your-bugfix-or-feature
+
+1. Create a branch for local development:
+
+    ```bash
+    git checkout -b name-of-your-bugfix-or-feature
     ```
 
     Now you can make your changes locally.
 
-6. When you're done making changes, check that your changes pass the
+1. When you're done making changes, check that your changes pass the
    tests, including testing other Python versions, with tox:
 
-    ```
-    $ poetry run tox
-    ```
-
-7. Commit your changes and push your branch to GitHub:
-
-    ```
-    $ git add .
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
+    ```bash
+    poetry run tox
     ```
 
-8. Submit a pull request through the GitHub website.
+1. Commit your changes and push your branch to GitHub:
+
+    ```bash
+    git add .
+    git commit -m "Your detailed description of your changes."
+    git push origin name-of-your-bugfix-or-feature
+    ```
+
+1. Submit a pull request through the GitHub website.
 
 ## Pull Request Guidelines
 
@@ -96,17 +96,16 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.md.
 3. The pull request should work for Python 3.6, 3.7, 3.8 and 3.9. Check
-   https://github.com/William-Fernandes252/naja/actions
+   <https://github.com/William-Fernandes252/naja/actions>
    and make sure that the tests pass for all supported Python versions.
 
 ## Tips
 
-```
-$ poetry run pytest tests/test_naja.py
+```basj
+poetry run pytest tests/test_crawler.py
 ```
 
 To run a subset of tests.
-
 
 ## Deploying
 
@@ -114,10 +113,10 @@ A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed (including an entry in CHANGELOG.md).
 Then run:
 
-```
-$ poetry run bump2version patch # possible: major / minor / patch
-$ git push
-$ git push --tags
+```bash
+poetry run bump2version patch # possible: major / minor / patch
+git push
+git push --tags
 ```
 
 GitHub Actions will then deploy to PyPI if tests pass.

@@ -1,3 +1,8 @@
+"""Options module.
+
+This module defines the options that can be used to configure the crawlers behavior.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -13,16 +18,13 @@ class CrawlerOptions(TypedDict, total=False):
     """Crawler options.
 
     Attributes:
-        client (httpx.AsyncClient): An instance of `httpx.AsyncClient` to use for
-        network requests.
+        client (httpx.AsyncClient): An instance of `httpx.AsyncClient` to use for network requests.
         workers (int): The number of worker tasks to run in parallel.
         limit (int): The maximum number of pages to crawl.
         user_agent (str): The user agent to use for the requests.
-        parser (parsers.Parser): The parser to use for parsing the content of the
-        websites to extract links.
-        rate_limiter (limiters.RateLimiter): The rate limiter to limit the number of
-        requests sent per second.
-    """
+        parser (parsers.Parser): The parser to use for parsing the content of the websites to extract links.
+        rate_limiter (limiters.RateLimiter): The rate limiter to limit the number of requests sent per second.
+    """  # noqa: E501
 
     client: httpx.AsyncClient
     workers: int

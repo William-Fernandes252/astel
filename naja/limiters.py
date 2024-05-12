@@ -1,3 +1,10 @@
+"""Rate limiting module.
+
+Most websites have rate limits to prevent abuse and to ensure that their servers.
+
+This module defines the rate limiters that can be used to limit the amount of requests sent to a website.
+"""  # noqa: E501
+
 from __future__ import annotations
 
 import asyncio
@@ -13,6 +20,7 @@ if TYPE_CHECKING:
     from urllib.robotparser import RequestRate  # type: ignore[attr-defined]
 
 __all__ = [
+    "RateLimiterConfig",
     "RateLimiter",
     "StaticRateLimiter",
     "NoLimitRateLimiter",
@@ -26,10 +34,8 @@ class RateLimiterConfig(TypedDict, total=False):
 
     Attributes:
         domain (str): The domain to crawl.
-        crawl_delay (str, optional): A string representing the delay between each
-        crawl in the format "<number><unit>" (as of the format used by
-        request_rate (RequestRate): The rate at which to make requests.
-    """
+        crawl_delay (str, optional): A string representing the delay between each crawl in the format "<number><unit>" (as of the format used by request_rate (RequestRate): The rate at which to make requests.
+    """  # noqa: E501
 
     domain: Optional[str]
     crawl_delay: Optional[str]
@@ -37,33 +43,25 @@ class RateLimiterConfig(TypedDict, total=False):
 
 
 class RateLimiter(ABC):
-    """
-    Limits the amount of concurrent network requests to certain websites
-    in order to avoid bans and throttling.
-    """
+    """Base class for rate limiters."""
 
     @abstractmethod
     def configure(
         self,
         config: RateLimiterConfig,
     ) -> None:
-        """Configures the rate limiter to respect the rules defined by the
-        domain with the given parameters.
+        """Configures the rate limiter to respect the rules defined by the domain with the given parameters.
 
         In the case of a craw delay, the craw delay is ignored.
 
         Args:
             config (RateLimiterConfig): The configuration to apply.
-        """
+        """  # noqa: E501
         ...
 
     @abstractmethod
     async def limit(self, *args, **kwargs) -> None:
-        """Asynchronously limits the specified URL.
-
-        Args:
-            url (str): The URL to limit
-        """
+        """Asynchronously limits the specified URL."""
         ...
 
 
@@ -124,8 +122,7 @@ class TokenBucketRateLimiter(RateLimiter):
     """Limit the requests by using the token bucket algorithm
 
     Args:
-        tokens_per_second (float): The amount of tokens to add to the bucket
-        per second
+        tokens_per_second (float): The amount of tokens to add to the bucket per second.
     """
 
     __slots__ = ("_tokens_per_second", "_tokens", "_last_refresh_time")
@@ -248,12 +245,11 @@ class PerDomainRateLimiter(RateLimiter):
 
         Args:
             domain (str): A string representing the domain name to add.
-            limiter (protocols.RateLimiter, optional): An optional `RateLimiter`
-            instance used to limit the rate of requests to the domain. Defaults to None.
+            limiter (protocols.RateLimiter, optional): An optional `RateLimiter` instance used to limit the rate of requests to the domain. Defaults to None.
 
         Raises:
             errors.InvalidUrlError: If the given URL does not contain a valid domain.
-        """
+        """  # noqa: E501
         if limiter is None and self.default_limiter is None:
             msg = "No limiter was provided and no default limiter was set."
             raise errors.InvalidConfigurationError(msg)
@@ -276,17 +272,11 @@ class PerDomainRateLimiter(RateLimiter):
         corresponding limiter.
 
         Args:
-            domain (str): A string representing the domain name to configure
-            the limiter for.
-            crawl_delay (str, optional): The amount of time (in seconds) to wait
-            between requests. Defaults to None.
-            request_rate (RequestRate, optional): The rate at which requests are made
-            to a domain. Defaults to None.
+            config (RateLimiterConfig): The configuration to apply.
 
         Raises:
-            errors.InvalidConfigurationError: If the new computed token rate is less
-            than or equal to 0.
-        """
+            errors.InvalidConfigurationError: If the new computed token rate is less than or equal to 0.
+        """  # noqa: E501
         if (
             config["domain"] is not None
             and config["domain"] not in self._domain_to_limiter

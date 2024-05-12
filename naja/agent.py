@@ -1,3 +1,5 @@
+"""User agent for processing domain rules, thus allowing the crawler to fetch the pages without getting blocked."""  # noqa: E501
+
 from __future__ import annotations
 
 from typing import List
@@ -28,8 +30,7 @@ class UserAgent:
 
         Args:
             domain (str): A string representing the domain to be acknowledged.
-            robots_url (str): A string representing the URL of the robots.txt file for
-            the domain.
+            robots_txt (str): A string representing the content of the robots.txt file.
         """
         if domain in self._acknowledged_domains:
             return
@@ -38,45 +39,39 @@ class UserAgent:
         self._acknowledged_domains[domain] = parser
 
     def can_access(self, domain: str, url: str) -> bool:
-        """Determines whether the given URL can be accessed by the user agent for the
-        specified domain.
+        """Determines whether the given URL can be accessed by the user agent for the specified domain.
 
         Args:
             domain (str): A string representing the domain of the URL.
             url (str): A string representing the URL to access.
 
         Returns:
-            bool: A boolean indicating whether the URL can be accessed for the
-            specified domain.
-        """
+            bool: A boolean indicating whether the URL can be accessed for the specified domain.
+        """  # noqa: E501
         return self._acknowledged_domains[domain].can_fetch(self.name, url)
 
     def get_request_rate(self, domain: str) -> RequestRate | None:
-        """Given a domain, returns the request rate of that domain
-        if it is acknowledged.
+        """Return the request rate of that domain if it is acknowledged.
 
         Args:
             domain (str): A string representing the domain whose request rate is sought.
 
         Returns:
-            Union[RequestRate, None]: An instance of `RequestRate` representing the
-            domain's request rate if the domain is acknowledged, else `None`.
-        """
+            Union[RequestRate, None]: An instance of `RequestRate` representing the domain's request rate if the domain is acknowledged, else `None`.
+        """  # noqa: E501
         if domain not in self._acknowledged_domains:
             return None
         return self._acknowledged_domains[domain].request_rate(self.name)
 
     def get_crawl_delay(self, domain: str) -> str | None:
-        """Returns the crawl delay for the given domain if it has been acknowledged,
-        None otherwise.
+        """Return the crawl delay for the given domain if it has been acknowledged, and `None` otherwise.
 
         Args:
             domain (str): A string representing the domain to check the crawl delay for.
 
         Returns:
-            Union[str, None]: A string representing the crawl delay for the given domain
-            if it has been acknowledged, `None` otherwise.
-        """
+            Union[str, None]: A string representing the crawl delay for the given domain if it has been acknowledged, `None` otherwise.
+        """  # noqa: E501
         if domain not in self._acknowledged_domains:
             return None
 
@@ -84,16 +79,14 @@ class UserAgent:
         return str(crawl_delay) if crawl_delay is not None else None
 
     def get_site_maps(self, domain: str) -> list[str] | None:
-        """Returns the site maps associated with the given domain if the domain is
-        acknowledged, otherwise returns None.
+        """Return the site maps associated with the given domain if the domain is acknowledged, otherwise returns `None`.
 
         Args:
             domain (str): A string representing the domain to retrieve site maps for.
 
         Returns:
-            Union[list[str], None]: A list of strings representing the site maps
-            associated with the domain, or `None` if the domain is not acknowledged.
-        """
+            Union[list[str], None]: A list of strings representing the site maps associated with the domain, or `None` if the domain is not acknowledged.
+        """  # noqa: E501
         if domain not in self._acknowledged_domains:
             return None
         return self._acknowledged_domains[domain].site_maps()

@@ -1,3 +1,8 @@
+"""Parsers for extracting links from webpages and sitemaps.
+
+This module defines the parsers that can be used to extract the links from the content of a webpage or a sitemap.
+"""  # noqa: E501
+
 from __future__ import annotations
 
 from abc import ABC
@@ -43,14 +48,11 @@ class Url(Protocol):
 
 
 class Parser(Protocol):
-    """Parses the content of a file (webpages, or sitemaps, for example) to extract
-    the links of interest (which are stored in the `found_links`
-    attribute as instances of `Url`).
+    """Parses the content of a file (webpages, or sitemaps, for example) to extract the links of interest.
 
     Args:
-        base (Union[str, None]): The base URL to use to resolve relative URLs.
-        Defaults to `None`.
-    """
+        base (Union[str, None]): The base URL to use to resolve relative URLs. Defaults to `None`.
+    """  # noqa: E501
 
     def __init__(self, base: str | None = None) -> None: ...
 
@@ -66,9 +68,8 @@ class Parser(Protocol):
         """Reset the parser to its initial state.
 
         Args:
-            base (Union[str, None], optional): The base URL to use to resolve relative
-            URLs. Defaults to `None`.
-        """
+            base (Union[str, None], optional): The base URL to use to resolve relative URLs. Defaults to `None`.
+        """  # noqa: E501
 
     @property
     def base(self) -> str | None: ...
@@ -109,12 +110,11 @@ def parse_url(url: str, base: str | None = None) -> Url:
 
     Args:
         url (str): The URL to parse
-        base (str, optional): The base URL to use to resolve relative URLs.
-        Defaults to None.
+        base (str, optional): The base URL to use to resolve relative URLs. Defaults to `None`.
 
     Returns:
         Url: The parsed URL
-    """
+    """  # noqa: E501
     result = parse.urlparse(url if base is None else parse.urljoin(base, url))
     return ParsedUrl(
         result.scheme,
@@ -151,7 +151,6 @@ class HTMLAnchorsParser(InitParserMixin, HTMLParser):
 
     Args:
         base (str): The base URL to use to resolve relative URLs
-        url_filter (Filterer): The filterer to use to filter the URLs
     """
 
     @override
