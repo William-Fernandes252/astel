@@ -60,7 +60,7 @@ class Crawler:
         self._num_workers = self._options["workers"]
         self._limit = self._options["limit"]
         self._total_pages = 0
-        self._event_emitter = self._options["event_limiter_factory"]()
+        self._event_emitter = self._options["event_emitter_factory"]()
 
     async def run(self) -> None:
         """Run the crawler."""
@@ -337,4 +337,4 @@ class Crawler:
         self._num_workers = self._options["workers"]
         self._limit = self._options["limit"]
         self._parser_class = self._options["parser_class"]
-        self._event_emitter = self._options["event_limiter_factory"]()
+        self._event_emitter = self._options["event_emitter_factory"]()
