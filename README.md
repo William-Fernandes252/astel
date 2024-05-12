@@ -1,8 +1,8 @@
-# Naja
-
 <div align="center">
   <img style="width: 50%; height: auto" src="docs/assets/logo.png" alt="Naja logo">
-</p>
+</div>
+
+# Naja
 
 [![pypi](https://img.shields.io/pypi/v/naja.svg)](https://pypi.org/project/naja/)
 [![python](https://img.shields.io/pypi/pyversions/naja.svg)](https://pypi.org/project/naja/)
