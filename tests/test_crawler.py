@@ -4,7 +4,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 from pytest_mock import MockerFixture, MockType
 
-from naja import crawler, events, filters, limiters, parsers
+from naja import crawler, events, filters, limiters, options, parsers
 
 
 def _add_robot_txt_response(httpx_mock: HTTPXMock, url: str, content: str) -> None:
@@ -185,18 +185,22 @@ class DescribeCrawler:
             assert initial_urls[0] in limit.mock_calls[0].args
 
         class DescribeOn:
-            async def it_should_call_on_url_found(
-                self,
-                crawler: crawler.Crawler,
-                mocker: MockerFixture,
-                initial_urls: List[str],
-                httpx_mock: HTTPXMock,
-            ):
+            @pytest.fixture(autouse=True)
+            def _add_robot_txt(
+                self, initial_urls: List[str], httpx_mock: HTTPXMock
+            ) -> None:
                 _add_robot_txt_response(
                     httpx_mock,
                     f"{initial_urls[0]}/robots.txt",
                     "User-agent: *\nAllow: /",
                 )
+
+            async def it_should_call_on_url_found(
+                self,
+                crawler: crawler.Crawler,
+                mocker: MockerFixture,
+                initial_urls: List[str],
+            ):
                 mock = mocker.Mock()
                 await crawler.on(events.Event.URL_FOUND, mock).run()
                 mock.assert_called_once_with(
@@ -210,11 +214,6 @@ class DescribeCrawler:
                 initial_urls: List[str],
                 httpx_mock: HTTPXMock,
             ):
-                _add_robot_txt_response(
-                    httpx_mock,
-                    f"{initial_urls[0]}/robots.txt",
-                    "User-agent: *\nAllow: /",
-                )
                 httpx_mock.add_response(
                     method="GET",
                     url=initial_urls[0],
@@ -226,3 +225,84 @@ class DescribeCrawler:
                 mock.assert_called_once()
                 assert isinstance(mock.call_args[0][0], Exception)
                 assert mock.mock_calls[0].kwargs["crawler"] is crawler
+
+        class DescribeRetry:
+            @pytest.fixture(autouse=True)
+            def _add_robot_txt(
+                self, initial_urls: List[str], httpx_mock: HTTPXMock
+            ) -> None:
+                _add_robot_txt_response(
+                    httpx_mock,
+                    f"{initial_urls[0]}/robots.txt",
+                    "User-agent: *\nAllow: /",
+                )
+
+            class CaseMustRetryForStatusCodesPassedAsOption:
+                @pytest.fixture()
+                def assert_all_responses_were_requested(self) -> bool:
+                    return True
+
+                @pytest.fixture(params=[[500, 502, 503, 504]])
+                def crawler_with_retry_option(
+                    self, request: pytest.FixtureRequest, initial_urls: List[str]
+                ) -> crawler.Crawler:
+                    return crawler.Crawler(
+                        initial_urls,
+                        options={"retry_for_status_codes": request.param},
+                    )
+
+                async def it_should_retry_failed_requests(
+                    self,
+                    crawler_with_retry_option: crawler.Crawler,
+                    initial_urls: List[str],
+                    httpx_mock: HTTPXMock,
+                ):
+                    content = b""
+                    httpx_mock.add_response(
+                        method="GET",
+                        url=initial_urls[0],
+                        status_code=500,
+                        content=b"Internal Server Error",
+                    )
+                    httpx_mock.add_response(
+                        method="GET",
+                        url=initial_urls[0],
+                        status_code=200,
+                        content=content,
+                    )
+                    await crawler_with_retry_option.run()
+
+            class CaseRetryHandlerSet:
+                @pytest.fixture()
+                def assert_all_responses_were_requested(self) -> bool:
+                    return True
+
+                @pytest.mark.parametrize(
+                    "retry_handler",
+                    [
+                        lambda url, response, crawler: url.raw  # noqa: ARG005
+                        == "https://example.com",
+                        lambda url, response, crawler: response.status_code  # noqa: ARG005
+                        == 500,  # noqa: PLR2004
+                    ],
+                )
+                async def it_should_retry_based_on_handler_return_value(
+                    self,
+                    crawler: crawler.Crawler,
+                    retry_handler: options.RetryHandler,
+                    initial_urls: List[str],
+                    httpx_mock: HTTPXMock,
+                ):
+                    httpx_mock.add_response(
+                        method="GET",
+                        url=initial_urls[0],
+                        status_code=500,
+                        content=b"Internal Server Error",
+                    )
+                    httpx_mock.add_response(
+                        method="GET",
+                        url=initial_urls[0],
+                        status_code=200,
+                        content=b"",
+                    )
+                    await crawler.retry(retry_handler).run()

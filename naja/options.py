@@ -6,12 +6,23 @@ This module defines the options that can be used to configure the crawlers behav
 from __future__ import annotations
 
 import asyncio
-from typing import Callable, Type, TypedDict
+from typing import TYPE_CHECKING, Callable, Protocol, Type, TypedDict, Union
 
 import eventemitter
 import httpx
 
 from naja import events, limiters, parsers
+
+if TYPE_CHECKING:
+    from naja.crawler import Crawler
+
+
+class RetryHandler(Protocol):
+    """Callable that determines whether the crawler should retry the request."""
+
+    def __call__(
+        self, url: parsers.Url, response: Union[httpx.Response, None], crawler: Crawler
+    ) -> bool: ...
 
 
 class CrawlerOptions(TypedDict, total=False):
@@ -25,6 +36,7 @@ class CrawlerOptions(TypedDict, total=False):
         parser (parsers.Parser): The parser to use for parsing the content of the websites to extract links.
         rate_limiter (limiters.RateLimiter): The rate limiter to limit the number of requests sent per second.
         event_limiter_factory (Callable[[], events.EventEmitter]): A factory function to create an event limiter for the crawler.
+        retry_for_status_codes (list[int]): A list of status codes for which the crawler should retry the request.
     """  # noqa: E501
 
     client: httpx.AsyncClient
@@ -34,6 +46,7 @@ class CrawlerOptions(TypedDict, total=False):
     parser_class: Type[parsers.Parser]
     rate_limiter: limiters.RateLimiter
     event_emitter_factory: Callable[[], events.EventEmitter]
+    retry_for_status_codes: list[int]
 
 
 DEFAULT_OPTIONS: CrawlerOptions = {
@@ -46,6 +59,7 @@ DEFAULT_OPTIONS: CrawlerOptions = {
     "event_emitter_factory": lambda: eventemitter.EventEmitter(
         asyncio.get_event_loop()
     ),
+    "retry_for_status_codes": [],
 }
 
 

@@ -7,13 +7,13 @@ from __future__ import annotations
 
 import asyncio
 import asyncio.constants
-from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type, cast
+from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type, Union, cast
 
 import httpx
 from typing_extensions import Self  # type: ignore[attr-defined]
 
 from naja import agent, events, filters, limiters, parsers
-from naja.options import CrawlerOptions, merge_with_default_options
+from naja.options import CrawlerOptions, RetryHandler, merge_with_default_options
 
 FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
@@ -43,6 +43,7 @@ class Crawler:
     _event_emitter: events.EventEmitter
     _workers: List[asyncio.Task]
     _options: CrawlerOptions
+    _must_retry: RetryHandler | None
 
     def __init__(
         self, urls: Iterable[str], options: CrawlerOptions | None = None
@@ -61,6 +62,23 @@ class Crawler:
         self._limit = self._options["limit"]
         self._total_pages = 0
         self._event_emitter = self._options["event_emitter_factory"]()
+
+        def _must_retry(
+            url: parsers.Url, response: Union[httpx.Response, None], _: Crawler
+        ) -> bool:
+            return bool(
+                (
+                    response
+                    and response.status_code in self._options["retry_for_status_codes"]
+                )
+                and url
+            )
+
+        self._must_retry = (
+            cast(RetryHandler, _must_retry)
+            if self._options["retry_for_status_codes"]
+            else None
+        )
 
     async def run(self) -> None:
         """Run the crawler."""
@@ -87,6 +105,12 @@ class Crawler:
             await task
         except httpx.HTTPError as e:
             self._emit_event(events.Event.ERROR, e)
+            if self._must_retry and self._must_retry(
+                parsers.parse_url(str(e.request.url)),
+                getattr(e, "response", None),
+                self,
+            ):
+                await self._put_todo(parsers.parse_url(str(e.request.url)))
         finally:
             self._todo.task_done()
 
@@ -273,6 +297,18 @@ class Crawler:
         self._done.clear()
         self._urls_seen.clear()
         self._total_pages = 0
+
+    def retry(self, handler: RetryHandler) -> Self:
+        """Set a handler to determine whether a request should be retried.
+
+        Args:
+            handler (Callable): A function that takes a `httpx.Response` and a `naja.parsers.Url` object and returns a boolean indicating whether the request should be retried.
+
+        Returns:
+            Crawler: The `Crawler` object with the retry handler set.
+        """  # noqa: E501
+        self._must_retry = handler
+        return self
 
     @property
     def total_pages(self) -> int:
