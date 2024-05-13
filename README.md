@@ -8,6 +8,7 @@
 [![python](https://img.shields.io/pypi/pyversions/astel.svg)](https://pypi.org/project/astel/)
 [![Build Status](https://github.com/William-Fernandes252/astel/actions/workflows/dev.yml/badge.svg)](https://github.com/William-Fernandes252/astel/actions/workflows/dev.yml)
 [![codecov](https://codecov.io/gh/William-Fernandes252/astel/graph/badge.svg?token=D8S6AF7A3Q)](https://codecov.io/gh/William-Fernandes252/astel)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 A simple, fast and reliable asyncronous web crawler for Python.
 
