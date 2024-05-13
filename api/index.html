@@ -544,9 +544,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#astel.crawler.Crawler.parser_class" class="md-nav__link">
+  <a href="#astel.crawler.Crawler.parser_factory" class="md-nav__link">
     <span class="md-ellipsis">
-      parser_class
+      parser_factory
     </span>
   </a>
   
@@ -1104,6 +1104,15 @@
   <a href="#astel.options.CrawlerOptions" class="md-nav__link">
     <span class="md-ellipsis">
       CrawlerOptions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#astel.options.ParserFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      ParserFactory
     </span>
   </a>
   
@@ -1471,9 +1480,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#astel.crawler.Crawler.parser_class" class="md-nav__link">
+  <a href="#astel.crawler.Crawler.parser_factory" class="md-nav__link">
     <span class="md-ellipsis">
-      parser_class
+      parser_factory
     </span>
   </a>
   
@@ -2031,6 +2040,15 @@
   <a href="#astel.options.CrawlerOptions" class="md-nav__link">
     <span class="md-ellipsis">
       CrawlerOptions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#astel.options.ParserFactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      ParserFactory
     </span>
   </a>
   
@@ -3080,8 +3098,7 @@ them to the given domain, if the domain has not already been acknowledged.</p>
 
             <details class="quote">
               <summary>Source code in <code>astel/crawler.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 23</span>
-<span class="normal"> 24</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 24</span>
 <span class="normal"> 25</span>
 <span class="normal"> 26</span>
 <span class="normal"> 27</span>
@@ -3432,7 +3449,8 @@ them to the given domain, if the domain has not already been acknowledged.</p>
 <span class="normal">372</span>
 <span class="normal">373</span>
 <span class="normal">374</span>
-<span class="normal">375</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Crawler</span><span class="p">:</span>
+<span class="normal">375</span>
+<span class="normal">376</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Crawler</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An asynchronous web crawler that can be used to extract, process and follow links in webpages.</span>
 
 <span class="sd">    Args:</span>
@@ -3445,7 +3463,7 @@ them to the given domain, if the domain has not already been acknowledged.</p>
     <span class="n">_start_urls</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">_urls_seen</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Url</span><span class="p">]</span>
     <span class="n">_done</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">_parser_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Parser</span><span class="p">]</span>
+    <span class="n">_parser_factory</span><span class="p">:</span> <span class="n">ParserFactory</span>
     <span class="n">_agent</span><span class="p">:</span> <span class="n">agent</span><span class="o">.</span><span class="n">UserAgent</span>
     <span class="n">_rate_limiter</span><span class="p">:</span> <span class="n">limiters</span><span class="o">.</span><span class="n">RateLimiter</span>
     <span class="n">_num_workers</span><span class="p">:</span> <span class="nb">int</span>
@@ -3467,7 +3485,7 @@ them to the given domain, if the domain has not already been acknowledged.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_filters</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">filters</span><span class="o">.</span><span class="n">Filter</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="n">merge_with_default_options</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;client&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parser_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;parser_class&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parser_factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;parser_factory&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_agent</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">UserAgent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;user_agent&quot;</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rate_limiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;rate_limiter&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_workers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;workers&quot;</span><span class="p">]</span>
@@ -3552,7 +3570,7 @@ them to the given domain, if the domain has not already been acknowledged.</p>
         <span class="p">)</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">_parse_links</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Url</span><span class="p">]:</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser_class</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">)</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser_factory</span><span class="p">(</span><span class="n">base</span><span class="o">=</span><span class="n">base</span><span class="p">)</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">feed</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">link</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">parser</span><span class="o">.</span><span class="n">found_links</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_filters</span><span class="p">(</span><span class="n">link</span><span class="p">)}</span>
 
@@ -3755,9 +3773,9 @@ them to the given domain, if the domain has not already been acknowledged.</p>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_limit</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parser_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Parser</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">parser_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParserFactory</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The parser factory object used by the crawler to parse HTML responses.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser_class</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser_factory</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">start_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -3783,7 +3801,7 @@ them to the given domain, if the domain has not already been acknowledged.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rate_limiter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;rate_limiter&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_workers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;workers&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;limit&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_parser_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;parser_class&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parser_factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;parser_factory&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_event_emitter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="s2">&quot;event_emitter_factory&quot;</span><span class="p">]()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -3909,14 +3927,14 @@ them to the given domain, if the domain has not already been acknowledged.</p>
 
 
 
-<h4 id="astel.crawler.Crawler.parser_class" class="doc doc-heading">
-          <code class="highlight language-python"><span class="n">parser_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Parser</span><span class="p">]</span></code>
+<h4 id="astel.crawler.Crawler.parser_factory" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">parser_factory</span><span class="p">:</span> <span class="n">ParserFactory</span></code>
   
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
 
-<a href="#astel.crawler.Crawler.parser_class" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#astel.crawler.Crawler.parser_factory" class="headerlink" title="Permanent link">&para;</a></h4>
 
 
   <div class="doc doc-contents ">
@@ -4130,8 +4148,7 @@ them to the given domain, if the domain has not already been acknowledged.</p>
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">213</span>
-<span class="normal">214</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
 <span class="normal">215</span>
 <span class="normal">216</span>
 <span class="normal">217</span>
@@ -4163,7 +4180,8 @@ them to the given domain, if the domain has not already been acknowledged.</p>
 <span class="normal">243</span>
 <span class="normal">244</span>
 <span class="normal">245</span>
-<span class="normal">246</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">filters</span><span class="o">.</span><span class="n">CallableFilter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="normal">246</span>
+<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">filters</span><span class="o">.</span><span class="n">CallableFilter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add URL filters to the crawler.</span>
 
 <span class="sd">    Filters can be used to determine which URLs should be ignored.</span>
@@ -4257,7 +4275,7 @@ is passed to the handler.
         <tr class="doc-section-item">
           <td><code>handler</code></td>
           <td>
-                <code><span title="typing.Callable">Callable</span></code>
+                <code>Callable</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -4273,8 +4291,7 @@ is passed to the handler.
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">260</span>
-<span class="normal">261</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">261</span>
 <span class="normal">262</span>
 <span class="normal">263</span>
 <span class="normal">264</span>
@@ -4291,7 +4308,8 @@ is passed to the handler.
 <span class="normal">275</span>
 <span class="normal">276</span>
 <span class="normal">277</span>
-<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">Event</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">Handler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="normal">278</span>
+<span class="normal">279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">Event</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">Handler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add an event handler to the crawler.</span>
 
 <span class="sd">    An event is emitted when</span>
@@ -4391,8 +4409,7 @@ is passed to the handler.
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
-<span class="normal">200</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">200</span>
 <span class="normal">201</span>
 <span class="normal">202</span>
 <span class="normal">203</span>
@@ -4403,7 +4420,8 @@ is passed to the handler.
 <span class="normal">208</span>
 <span class="normal">209</span>
 <span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">parse_site_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site_map_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Url</span><span class="p">]:</span>
+<span class="normal">211</span>
+<span class="normal">212</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">parse_site_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site_map_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Url</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a sitemap.xml file and return the URLs found in it.</span>
 
 <span class="sd">    Args:</span>
@@ -4439,11 +4457,11 @@ is passed to the handler.
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">294</span>
-<span class="normal">295</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">295</span>
 <span class="normal">296</span>
 <span class="normal">297</span>
-<span class="normal">298</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">298</span>
+<span class="normal">299</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reset the crawler.&quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_done</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_urls_seen</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -4485,7 +4503,7 @@ is passed to the handler.
         <tr class="doc-section-item">
           <td><code>handler</code></td>
           <td>
-                <code><span title="typing.Callable">Callable</span></code>
+                <code>Callable</code>
           </td>
           <td>
             <div class="doc-md-description">
@@ -4525,8 +4543,7 @@ is passed to the handler.
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">300</span>
-<span class="normal">301</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">301</span>
 <span class="normal">302</span>
 <span class="normal">303</span>
 <span class="normal">304</span>
@@ -4535,7 +4552,8 @@ is passed to the handler.
 <span class="normal">307</span>
 <span class="normal">308</span>
 <span class="normal">309</span>
-<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">retry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">RetryHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="normal">310</span>
+<span class="normal">311</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">retry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handler</span><span class="p">:</span> <span class="n">RetryHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set a handler to determine whether a request should be retried.</span>
 
 <span class="sd">    Args:</span>
@@ -4573,8 +4591,7 @@ is passed to the handler.
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">83</span>
-<span class="normal">84</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">84</span>
 <span class="normal">85</span>
 <span class="normal">86</span>
 <span class="normal">87</span>
@@ -4583,7 +4600,8 @@ is passed to the handler.
 <span class="normal">90</span>
 <span class="normal">91</span>
 <span class="normal">92</span>
-<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">93</span>
+<span class="normal">94</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the crawler.&quot;&quot;&quot;</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on_found_links</span><span class="p">({</span><span class="n">parsers</span><span class="o">.</span><span class="n">parse_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_urls</span><span class="p">})</span>
 
@@ -4647,8 +4665,7 @@ is passed to the handler.
 
           <details class="quote">
             <summary>Source code in <code>astel/crawler.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">283</span>
-<span class="normal">284</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">284</span>
 <span class="normal">285</span>
 <span class="normal">286</span>
 <span class="normal">287</span>
@@ -4656,7 +4673,8 @@ is passed to the handler.
 <span class="normal">289</span>
 <span class="normal">290</span>
 <span class="normal">291</span>
-<span class="normal">292</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">292</span>
+<span class="normal">293</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stop the crawler current execution.</span>
 
 <span class="sd">    Args:</span>
@@ -8156,13 +8174,13 @@ number of available tokens if possible.</p>
           </td>
         </tr>
         <tr class="doc-section-item">
-          <td><code><span title="astel.options.CrawlerOptions.parser">parser</span></code></td>
+          <td><code><span title="astel.options.CrawlerOptions.parser_factory">parser_factory</span></code></td>
           <td>
-                <code><a class="autorefs autorefs-internal" title="astel.parsers.Parser" href="#astel.parsers.Parser">Parser</a></code>
+                <code><a class="autorefs autorefs-internal" title="astel.options.ParserFactory" href="#astel.options.ParserFactory">ParserFactory</a></code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>The parser to use for parsing the content of the websites to extract links.</p>
+              <p>A factory function to create a parser instance.</p>
             </div>
           </td>
         </tr>
@@ -8204,13 +8222,7 @@ number of available tokens if possible.</p>
 
             <details class="quote">
               <summary>Source code in <code>astel/options.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
@@ -8225,7 +8237,13 @@ number of available tokens if possible.</p>
 <span class="normal">46</span>
 <span class="normal">47</span>
 <span class="normal">48</span>
-<span class="normal">49</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">CrawlerOptions</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">CrawlerOptions</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Crawler options.</span>
 
 <span class="sd">    Attributes:</span>
@@ -8233,7 +8251,7 @@ number of available tokens if possible.</p>
 <span class="sd">        workers (int): The number of worker tasks to run in parallel.</span>
 <span class="sd">        limit (int): The maximum number of pages to crawl.</span>
 <span class="sd">        user_agent (str): The user agent to use for the requests.</span>
-<span class="sd">        parser (parsers.Parser): The parser to use for parsing the content of the websites to extract links.</span>
+<span class="sd">        parser_factory (ParserFactory): A factory function to create a parser instance.</span>
 <span class="sd">        rate_limiter (limiters.RateLimiter): The rate limiter to limit the number of requests sent per second.</span>
 <span class="sd">        event_limiter_factory (Callable[[], events.EventEmitter]): A factory function to create an event limiter for the crawler.</span>
 <span class="sd">        retry_for_status_codes (list[int]): A list of status codes for which the crawler should retry the request.</span>
@@ -8243,10 +8261,61 @@ number of available tokens if possible.</p>
     <span class="n">workers</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">user_agent</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">parser_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">parsers</span><span class="o">.</span><span class="n">Parser</span><span class="p">]</span>
+    <span class="n">parser_factory</span><span class="p">:</span> <span class="n">ParserFactory</span>
     <span class="n">rate_limiter</span><span class="p">:</span> <span class="n">limiters</span><span class="o">.</span><span class="n">RateLimiter</span>
     <span class="n">event_emitter_factory</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">events</span><span class="o">.</span><span class="n">EventEmitter</span><span class="p">]</span>
     <span class="n">retry_for_status_codes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+  </div>
+
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="astel.options.ParserFactory" class="doc doc-heading">
+          <code>ParserFactory</code>
+
+
+<a href="#astel.options.ParserFactory" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+  <div class="doc doc-contents ">
+          <p class="doc doc-class-bases">
+            Bases: <code><span title="typing.Protocol">Protocol</span></code></p>
+
+  
+      <p>Callable that creates a parser instance.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>astel/options.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">ParserFactory</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Callable that creates a parser instance.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">parsers</span><span class="o">.</span><span class="n">Parser</span><span class="p">:</span> <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
 
@@ -8291,12 +8360,12 @@ number of available tokens if possible.</p>
 
             <details class="quote">
               <summary>Source code in <code>astel/options.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">RetryHandler</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">RetryHandler</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Callable that determines whether the crawler should retry the request.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
@@ -8398,16 +8467,16 @@ number of available tokens if possible.</p>
 
           <details class="quote">
             <summary>Source code in <code>astel/options.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">72</span>
 <span class="normal">73</span>
 <span class="normal">74</span>
-<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">merge_with_default_options</span><span class="p">(</span><span class="n">options</span><span class="p">:</span> <span class="n">CrawlerOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CrawlerOptions</span><span class="p">:</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">merge_with_default_options</span><span class="p">(</span><span class="n">options</span><span class="p">:</span> <span class="n">CrawlerOptions</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CrawlerOptions</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge the given options with the default options.</span>
 
 <span class="sd">    Args:</span>
