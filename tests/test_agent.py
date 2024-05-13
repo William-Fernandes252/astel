@@ -1,6 +1,6 @@
 import pytest
 
-from naja import agent
+from astel import agent
 
 
 class DescribeUserAgent:

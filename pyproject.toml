@@ -1,9 +1,9 @@
 [tool]
 
 [tool.poetry]
-name = "naja"
+name = "astel"
 version = "0.1.0"
-homepage = "https://github.com/William-Fernandes252/naja"
+homepage = "https://github.com/William-Fernandes252/astel"
 description = "Python package for asyncronous web crawling."
 authors = ["William Fernandes Dias <william.winchester1967@gmail.com>"]
 readme = "README.md"
@@ -19,7 +19,7 @@ classifiers = [
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
 ]
-packages = [{ include = "naja" }, { include = "tests", format = "sdist" }]
+packages = [{ include = "astel" }, { include = "tests", format = "sdist" }]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -90,7 +90,7 @@ doc = [
 ]
 
 [tool.poetry.scripts]
-naja = 'naja.cli:main'
+astel = 'astel.cli:main'
 
 
 [tool.ruff]

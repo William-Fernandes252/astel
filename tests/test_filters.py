@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Type
 import pytest
 from hypothesis import assume, given, settings, strategies
 
-from naja.filters import (
+from astel.filters import (
     Contains,
     EndsWith,
     Filter,
@@ -20,7 +20,7 @@ from naja.filters import (
 from tests.strategies import filter_kwargs, filters, url_properties, urls
 
 if TYPE_CHECKING:
-    from naja.parsers import Url
+    from astel.parsers import Url
 
 
 class FilterTest(ABC):

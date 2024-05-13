@@ -4,7 +4,7 @@ import pytest
 from pytest_httpx import HTTPXMock
 from pytest_mock import MockerFixture, MockType
 
-from naja import crawler, events, filters, limiters, options, parsers
+from astel import crawler, events, filters, limiters, options, parsers
 
 
 def _add_robot_txt_response(httpx_mock: HTTPXMock, url: str, content: str) -> None:

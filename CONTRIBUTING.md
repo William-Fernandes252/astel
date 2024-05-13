@@ -9,7 +9,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at the [issues page](https://github.com/William-Fernandes252/naja/issues).
+Report bugs at the [issues page](https://github.com/William-Fernandes252/astel/issues).
 
 If you are reporting a bug, please include:
 
@@ -29,13 +29,13 @@ and "help wanted" is open to whoever wants to implement it.
 
 ### Write Documentation
 
-Naja could always use more documentation, whether as part of the
-official Naja docs, in docstrings, or even on the web in blog posts,
+Astel could always use more documentation, whether as part of the
+official Astel docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 ### Submit Feedback
 
-The best way to send feedback is to file an issue at the [issues feedback page](https://github.com/William-Fernandes252/naja/issues).
+The best way to send feedback is to file an issue at the [issues feedback page](https://github.com/William-Fernandes252/astel/issues).
 
 If you are proposing a feature:
 
@@ -46,13 +46,13 @@ If you are proposing a feature:
 
 ## Get Started
 
-Ready to contribute? Here's how to set up `naja` for local development.
+Ready to contribute? Here's how to set up `astel` for local development.
 
-1. Fork the `naja` repo on GitHub.
+1. Fork the `astel` repo on GitHub.
 1. Clone your fork locally
 
     ```bash
-    git clone git@github.com:your_name_here/naja.git
+    git clone git@github.com:your_name_here/astel.git
     ```
 
 1. Ensure [poetry](https://python-poetry.org/docs/) is installed.
@@ -96,7 +96,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.md.
 3. The pull request should work for Python 3.6, 3.7, 3.8 and 3.9. Check
-   <https://github.com/William-Fernandes252/naja/actions>
+   <https://github.com/William-Fernandes252/astel/actions>
    and make sure that the tests pass for all supported Python versions.
 
 ## Tips

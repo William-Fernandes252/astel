@@ -7,7 +7,7 @@ from freezegun import freeze_time
 from hypothesis import given, provisional, settings
 from pytest_mock import MockerFixture, MockType
 
-from naja import errors, limiters
+from astel import errors, limiters
 
 
 class DescribeStaticLimiter:

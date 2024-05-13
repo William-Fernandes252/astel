@@ -1,6 +1,6 @@
 from hypothesis import given, provisional
 
-from naja import parsers
+from astel import parsers
 
 
 class DescribeParseUrl:

@@ -3,8 +3,8 @@ from typing import Any, Dict, Type
 
 from hypothesis import provisional, strategies
 
-from naja import parsers
-from naja.filters import (
+from astel import parsers
+from astel.filters import (
     Filter,
     In,
     Matches,

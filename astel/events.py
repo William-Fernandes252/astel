@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING, Protocol, Union
 import httpx
 from typing_extensions import Self  # type: ignore[attr-defined]
 
-from naja import errors, parsers
+from astel import errors, parsers
 
 if TYPE_CHECKING:
-    from naja.crawler import Crawler
+    from astel.crawler import Crawler
 
 
 class Event(Enum):

@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING, Callable, Protocol, Type, TypedDict, Union
 import eventemitter
 import httpx
 
-from naja import events, limiters, parsers
+from astel import events, limiters, parsers
 
 if TYPE_CHECKING:
-    from naja.crawler import Crawler
+    from astel.crawler import Crawler
 
 
 class RetryHandler(Protocol):
@@ -53,7 +53,7 @@ DEFAULT_OPTIONS: CrawlerOptions = {
     "client": httpx.AsyncClient(),
     "workers": 10,
     "limit": 25,
-    "user_agent": "naja",
+    "user_agent": "astel",
     "parser_class": parsers.HTMLAnchorsParser,
     "rate_limiter": limiters.PerDomainRateLimiter(limiters.StaticRateLimiter(1)),
     "event_emitter_factory": lambda: eventemitter.EventEmitter(

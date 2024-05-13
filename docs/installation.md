@@ -2,39 +2,39 @@
 
 ## Stable release
 
-To install Naja, run this command in your
+To install Astel, run this command in your
 terminal:
 
 ``` console
-$ pip install naja
+pip install astel
 ```
 
-This is the preferred method to install Naja, as it will always install the most recent stable release.
+This is the preferred method to install Astel, as it will always install the most recent stable release.
 
 If you don't have [pip][] installed, this [Python installation guide][]
 can guide you through the process.
 
 ## From source
 
-The source for Naja can be downloaded from
+The source for Astel can be downloaded from
 the [Github repo][].
 
 You can either clone the public repository:
 
 ``` console
-$ git clone git://github.com/William-Fernandes252/naja
+git clone git://github.com/William-Fernandes252/astel
 ```
 
 Or download the [tarball][]:
 
 ``` console
-$ curl -OJL https://github.com/William-Fernandes252/naja/tarball/master
+curl -OJL https://github.com/William-Fernandes252/astel/tarball/master
 ```
 
 Once you have a copy of the source, you can install it with:
 
 ``` console
-$ pip install .
+pip install .
 ```
 
   [pip]: https://pip.pypa.io

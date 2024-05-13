@@ -1,10 +1,10 @@
 # Usage
 
-To use Naja in a project, simply create a crawler instance passing a set of URLs to start.
+To use Astel in a project, simply create a crawler instance passing a set of URLs to start.
 
 ```python
 import asyncio
-import naja
+import astel
 
 async def main():
     crawler = Crawler(["https://example.com"])
@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
 Note that the all the crawler operations are **asyncronous**, so you need to use a package that can run corotines like the built-in `asyncio` Python module.
 
-To get details on how you can configure and customize the crawler behavior, go to the [API Reference](/naja/api).
+To get details on how you can configure and customize the crawler behavior, go to the [API Reference](/astel/api).

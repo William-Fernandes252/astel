@@ -1,4 +1,4 @@
-"""Console script for naja."""
+"""Console script for astel."""
 
 import asyncio
 import sys
@@ -6,8 +6,8 @@ from typing import Callable, List, Union
 
 import click
 
-from naja.crawler import Crawler
-from naja.options import CrawlerOptions
+from astel.crawler import Crawler
+from astel.options import CrawlerOptions
 
 
 def cli_for(
@@ -23,7 +23,7 @@ def cli_for(
         Callable[..., int]: A CLI function.
     """
 
-    @click.command("naja")
+    @click.command("astel")
     @click.argument("urls", required=True, type=str, nargs=-1)
     @click.option(
         "--workers",
@@ -45,12 +45,12 @@ def cli_for(
         "--agent",
         "-u",
         type=str,
-        default="naja",
+        default="astel",
         show_default=True,
         help="User agent to use for the requests.",
     )
     def main(*urls: str, **kwargs: Union[int, str]) -> int:
-        """Console script for naja."""
+        """Console script for astel."""
         crawler = crawler_factory(
             list(urls),
             {

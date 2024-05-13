@@ -1,17 +1,17 @@
 # API Reference
 
-::: naja.agent
+::: astel.agent
 
-::: naja.crawler
+::: astel.crawler
 
-::: naja.errors
+::: astel.errors
 
-::: naja.events
+::: astel.events
 
-::: naja.filters
+::: astel.filters
 
-::: naja.limiters
+::: astel.limiters
 
-::: naja.options
+::: astel.options
 
-::: naja.parsers
+::: astel.parsers

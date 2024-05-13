@@ -12,8 +12,8 @@ from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type, Uni
 import httpx
 from typing_extensions import Self  # type: ignore[attr-defined]
 
-from naja import agent, events, filters, limiters, parsers
-from naja.options import CrawlerOptions, RetryHandler, merge_with_default_options
+from astel import agent, events, filters, limiters, parsers
+from astel.options import CrawlerOptions, RetryHandler, merge_with_default_options
 
 FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
 
@@ -266,15 +266,14 @@ class Crawler:
         - a response is received (`Event.RESPONSE`): the `httpx.Response` object is
         passed to the handler.
         - an error occurs (`Event.ERROR`): the `Error` object is passed to the handler.
-        - a URL is done being processed (`Event.DONE`): the `naja.parsers.Url` object
+        - a URL is done being processed (`Event.DONE`): the `astel.parsers.Url` object
         is passed to the handler.
-        - a URL is found in a page (`Event.URL_FOUND`): the `naja.parsers.Url` object is
-        passed to the handler.
+        - a URL is found in a page (`Event.URL_FOUND`): the `astel.parsers.Url` object is passed to the handler.
 
         Args:
             event (str): The event to add the handler to.
             handler (Callable): The handler to add to the event.
-        """
+        """  # noqa: E501
         self._event_emitter.on(event, handler)
         return self
 
@@ -302,7 +301,7 @@ class Crawler:
         """Set a handler to determine whether a request should be retried.
 
         Args:
-            handler (Callable): A function that takes a `httpx.Response` and a `naja.parsers.Url` object and returns a boolean indicating whether the request should be retried.
+            handler (Callable): A function that takes a `httpx.Response` and a `astel.parsers.Url` object and returns a boolean indicating whether the request should be retried.
 
         Returns:
             Crawler: The `Crawler` object with the retry handler set.

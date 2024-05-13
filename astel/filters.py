@@ -25,7 +25,7 @@ from typing import (
     cast,
 )
 
-from naja.parsers import Url
+from astel.parsers import Url
 
 __all__ = [
     "UrlProperty",
@@ -69,7 +69,7 @@ class Filter(ABC, Generic[T]):
         T: The type of the filter parameter.
 
     Examples:
-        >>> from naja.filterers.filters import In
+        >>> from astel.filterers.filters import In
         >>> domain_in_list = In("domain", ["example.com"])
         >>> html_or_php = In(lambda url: url.path.split(".")[-1], ["html", "php"])
         >>> my_filter = domain_in_list & html_or_php
@@ -153,7 +153,7 @@ class In(Filter[Sequence[str]]):
     """Filter URLs based on a group of values.
 
     Examples:
-        >>> from naja.filterers.filters import In
+        >>> from astel.filterers.filters import In
         >>> domain_in_list = In("domain", ["example.com"])
         >>> domain_in_list.filter(ParsedUrl(domain="https://example.com", ...))  # True
     """
@@ -170,7 +170,7 @@ class Matches(Filter[Union[re.Pattern, str]]):
     r"""Filter URLs based on a regular expression.
 
     Examples:
-        >>> from naja.filterers.filters import Matches
+        >>> from astel.filterers.filters import Matches
         >>> domain_matches = Matches("domain", r"example\..+")
         >>> domain_matches.filter(ParsedUrl(domain="https://example.com", ...))  # True
     """
@@ -212,7 +212,7 @@ class StartsWith(TextFilter):
     """Filter URLs based on a text prefix.
 
     Examples:
-        >>> from naja.filterers.filters import StartsWith
+        >>> from astel.filterers.filters import StartsWith
         >>> domain_starts_with = StartsWith("domain", "example")
         >>> domain_starts_with.filter(ParsedUrl(domain="https://example.com", ...))  # True
     """  # noqa: E501
@@ -225,7 +225,7 @@ class EndsWith(TextFilter):
     """Filter URLs based on a text suffix.
 
     Examples:
-        >>> from naja.filterers.filters import EndsWith
+        >>> from astel.filterers.filters import EndsWith
         >>> domain_ends_with = EndsWith("domain", ".com")
         >>> domain_ends_with.filter(ParsedUrl(domain="https://example.com", ...))  # True
     """  # noqa: E501
@@ -238,7 +238,7 @@ class Contains(TextFilter):
     """Filter URLs based on a text substring.
 
     Examples:
-        >>> from naja.filterers.filters import Contains
+        >>> from astel.filterers.filters import Contains
         >>> domain_contains = Contains("domain", "example")
         >>> domain_contains.filter(ParsedUrl(domain="https://example.com", ...))  # True
     """

@@ -1,1 +1,1 @@
-"""Unit test package for naja."""
+"""Unit test package for astel."""

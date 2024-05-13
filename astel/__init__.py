@@ -1,4 +1,4 @@
-"""Top-level package for Naja."""
+"""Top-level package for Astel."""
 
 from . import crawler, errors, events, filters, limiters, options, parsers
 

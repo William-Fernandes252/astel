@@ -1,7 +1,7 @@
-site_name: Naja
-site_url: https://William-Fernandes252.github.io/naja
-repo_url: https://github.com/William-Fernandes252/naja
-repo_name: William-Fernandes252/naja
+site_name: Astel
+site_url: https://William-Fernandes252.github.io/astel
+repo_url: https://github.com/William-Fernandes252/astel
+repo_name: William-Fernandes252/astel
 #strict: true
 nav:
   - Home: index.md
@@ -17,21 +17,21 @@ theme:
   logo: ./assets/icon.png
   palette:
     - media: "(prefers-color-scheme)"
-      primary: teal
-      accent: teal
+      primary: deep purple
+      accent: deep purple
       toggle:
         icon: material/brightness-auto
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: teal
-      accent: teal
+      primary: deep purple
+      accent: deep purple
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      primary: teal
-      accent: teal
+      primary: deep purple
+      accent: deep purple
       scheme: slate
       toggle:
         icon: material/brightness-4
@@ -80,7 +80,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/William-Fernandes252/naja
+      link: https://github.com/William-Fernandes252/astel
       name: Github
     - icon: material/email
       link: "mailto:william.winchester1967@gmail.com"

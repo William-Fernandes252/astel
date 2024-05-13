@@ -1,4 +1,4 @@
-from naja.options import DEFAULT_OPTIONS, merge_with_default_options
+from astel.options import DEFAULT_OPTIONS, merge_with_default_options
 
 
 class DescribeMergeWithDefaultOptions:
