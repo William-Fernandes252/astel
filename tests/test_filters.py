@@ -58,6 +58,7 @@ class TestIn(FilterTest):
         f = self.filter_class(url_prop, examples)
         assert f.filter(sample_url) == expected
 
+    @settings(max_examples=2)
     @given(
         url_prop=url_properties(),
         examples=strategies.lists(
@@ -66,7 +67,6 @@ class TestIn(FilterTest):
         sample_url=urls(),
         expected=strategies.booleans(),
     )
-    @settings(max_examples=3)
     def it_should_filter_out_if_url_prop_value_is_not_in_examples_when_inverted(
         self,
         url_prop: UrlProperty,

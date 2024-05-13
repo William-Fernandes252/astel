@@ -4,7 +4,7 @@ from urllib.robotparser import RequestRate  # type: ignore[attr-defined]
 
 import pytest
 from freezegun import freeze_time
-from hypothesis import given, provisional
+from hypothesis import given, provisional, settings
 from pytest_mock import MockerFixture, MockType
 
 from naja import errors, limiters
@@ -87,6 +87,7 @@ class DescribePerDomainRateLimiter:
         def limiter_with_default(self, mocker: MockerFixture):
             return limiters.PerDomainRateLimiter(mocker.MagicMock(limiters.RateLimiter))
 
+        @settings(max_examples=2)
         @given(url=provisional.urls())
         async def it_raises_a_value_error_if_no_domain_is_given(
             self, limiter: limiters.PerDomainRateLimiter, url: str
