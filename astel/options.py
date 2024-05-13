@@ -6,7 +6,7 @@ This module defines the options that can be used to configure the crawlers behav
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Protocol, Type, TypedDict, Union
+from typing import TYPE_CHECKING, Callable, Protocol, TypedDict, Union
 
 import eventemitter
 import httpx
@@ -15,6 +15,12 @@ from astel import events, limiters, parsers
 
 if TYPE_CHECKING:
     from astel.crawler import Crawler
+
+
+class ParserFactory(Protocol):
+    """Callable that creates a parser instance."""
+
+    def __call__(self, base: str | None = None) -> parsers.Parser: ...
 
 
 class RetryHandler(Protocol):
@@ -33,7 +39,7 @@ class CrawlerOptions(TypedDict, total=False):
         workers (int): The number of worker tasks to run in parallel.
         limit (int): The maximum number of pages to crawl.
         user_agent (str): The user agent to use for the requests.
-        parser (parsers.Parser): The parser to use for parsing the content of the websites to extract links.
+        parser_factory (ParserFactory): A factory function to create a parser instance.
         rate_limiter (limiters.RateLimiter): The rate limiter to limit the number of requests sent per second.
         event_limiter_factory (Callable[[], events.EventEmitter]): A factory function to create an event limiter for the crawler.
         retry_for_status_codes (list[int]): A list of status codes for which the crawler should retry the request.
@@ -43,7 +49,7 @@ class CrawlerOptions(TypedDict, total=False):
     workers: int
     limit: int
     user_agent: str
-    parser_class: Type[parsers.Parser]
+    parser_factory: ParserFactory
     rate_limiter: limiters.RateLimiter
     event_emitter_factory: Callable[[], events.EventEmitter]
     retry_for_status_codes: list[int]
@@ -54,7 +60,7 @@ DEFAULT_OPTIONS: CrawlerOptions = {
     "workers": 10,
     "limit": 25,
     "user_agent": "astel",
-    "parser_class": parsers.HTMLAnchorsParser,
+    "parser_factory": parsers.HTMLAnchorsParser,
     "rate_limiter": limiters.PerDomainRateLimiter(limiters.StaticRateLimiter(1)),
     "event_emitter_factory": lambda: eventemitter.EventEmitter(
         asyncio.get_event_loop()

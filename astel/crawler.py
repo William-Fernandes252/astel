@@ -7,17 +7,18 @@ from __future__ import annotations
 
 import asyncio
 import asyncio.constants
-from typing import Callable, Coroutine, Iterable, List, Optional, Set, Type, Union, cast
+from typing import Iterable, List, Optional, Set, Union, cast
 
 import httpx
 from typing_extensions import Self  # type: ignore[attr-defined]
 
 from astel import agent, events, filters, limiters, parsers
-from astel.options import CrawlerOptions, RetryHandler, merge_with_default_options
-
-FoundUrlsHandler = Callable[[set], Coroutine[set, None, None]]
-
-ParserFactory = Type[parsers.Parser]
+from astel.options import (
+    CrawlerOptions,
+    ParserFactory,
+    RetryHandler,
+    merge_with_default_options,
+)
 
 
 class Crawler:
@@ -33,7 +34,7 @@ class Crawler:
     _start_urls: Set[str]
     _urls_seen: Set[parsers.Url]
     _done: Set[str]
-    _parser_class: Type[parsers.Parser]
+    _parser_factory: ParserFactory
     _agent: agent.UserAgent
     _rate_limiter: limiters.RateLimiter
     _num_workers: int
@@ -55,7 +56,7 @@ class Crawler:
         self._filters: List[filters.Filter] = []
         self._options = merge_with_default_options(options)
         self._client = self._options["client"]
-        self._parser_class = self._options["parser_class"]
+        self._parser_factory = self._options["parser_factory"]
         self._agent = agent.UserAgent(self._options["user_agent"])
         self._rate_limiter = self._options["rate_limiter"]
         self._num_workers = self._options["workers"]
@@ -140,7 +141,7 @@ class Crawler:
         ).raise_for_status()
 
     async def _parse_links(self, base: str, text: str) -> set[parsers.Url]:
-        parser = self._parser_class(base=base)
+        parser = self._parser_factory(base=base)
         parser.feed(text)
         return {link for link in parser.found_links if self._apply_filters(link)}
 
@@ -343,9 +344,9 @@ class Crawler:
         return self._limit
 
     @property
-    def parser_class(self) -> Type[parsers.Parser]:
+    def parser_factory(self) -> ParserFactory:
         """The parser factory object used by the crawler to parse HTML responses."""
-        return self._parser_class
+        return self._parser_factory
 
     @property
     def start_urls(self) -> Set[str]:
@@ -371,5 +372,5 @@ class Crawler:
         self._rate_limiter = self._options["rate_limiter"]
         self._num_workers = self._options["workers"]
         self._limit = self._options["limit"]
-        self._parser_class = self._options["parser_class"]
+        self._parser_factory = self._options["parser_factory"]
         self._event_emitter = self._options["event_emitter_factory"]()
