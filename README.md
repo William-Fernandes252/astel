@@ -7,7 +7,7 @@
 [![pypi](https://img.shields.io/pypi/v/astel.svg)](https://pypi.org/project/astel/)
 [![python](https://img.shields.io/pypi/pyversions/astel.svg)](https://pypi.org/project/astel/)
 [![Build Status](https://github.com/William-Fernandes252/astel/actions/workflows/dev.yml/badge.svg)](https://github.com/William-Fernandes252/astel/actions/workflows/dev.yml)
-[![codecov](https://codecov.io/gh/William-Fernandes252/astel/branch/main/graphs/badge.svg)](https://codecov.io/github/William-Fernandes252/astel)
+[![codecov](https://codecov.io/gh/William-Fernandes252/astel/graph/badge.svg?token=D8S6AF7A3Q)](https://codecov.io/gh/William-Fernandes252/astel)
 
 A simple, fast and reliable asyncronous web crawler for Python.
 
